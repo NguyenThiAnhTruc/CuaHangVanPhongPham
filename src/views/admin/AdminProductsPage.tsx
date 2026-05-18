@@ -5,6 +5,7 @@ import {
   AlertCircle,
   Download,
   Edit2,
+  ImagePlus,
   Plus,
   Save,
   Trash2,
@@ -30,6 +31,7 @@ export function AdminProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [formError, setFormError] = useState("");
@@ -115,6 +117,48 @@ export function AdminProductsPage() {
     return "";
   };
 
+  const handleImageUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setFormError("Vui lòng chọn file hình ảnh.");
+      return;
+    }
+
+    if (file.size > 3 * 1024 * 1024) {
+      setFormError("Ảnh không được vượt quá 3MB.");
+      return;
+    }
+
+    setUploading(true);
+    setFormError("");
+
+    const extension = file.name.split(".").pop() || "jpg";
+    const safeName = `${Date.now()}-${crypto.randomUUID()}.${extension}`;
+    const storagePath = `products/${safeName}`;
+
+    const { error } = await supabase.storage
+      .from("product-images")
+      .upload(storagePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+    if (error) {
+      setFormError(error.message || "Không thể upload ảnh sản phẩm.");
+      setUploading(false);
+      return;
+    }
+
+    const { data } = supabase.storage
+      .from("product-images")
+      .getPublicUrl(storagePath);
+
+    setFormData((current) => ({
+      ...current,
+      image_url: data.publicUrl,
+    }));
+    setUploading(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
@@ -188,7 +232,7 @@ export function AdminProductsPage() {
         "Tên sản phẩm": product.name,
         "Danh mục": categoryById.get(product.category_id) || "",
         "Mô tả": product.description,
-        "Giá": product.price,
+        Giá: product.price,
         "Tồn kho": product.stock,
         "Trạng thái": product.is_active ? "Hiển thị" : "Ẩn",
         "URL ảnh": product.image_url,
@@ -218,7 +262,7 @@ export function AdminProductsPage() {
               Quản lý sản phẩm
             </h1>
             <p className="text-sm text-gray-500 mt-1">
-              Thêm, chỉnh sửa, ẩn hiện, xuất file và kiểm soát tồn kho sản phẩm.
+              Thêm, chỉnh sửa, upload ảnh, xuất file và kiểm soát tồn kho.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
@@ -262,27 +306,24 @@ export function AdminProductsPage() {
               <table className="w-full">
                 <thead className="bg-slate-100 border-b">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                      Hình ảnh
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                      Tên sản phẩm
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                      Danh mục
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                      Giá
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                      Tồn kho
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                      Trạng thái
-                    </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase">
-                      Thao tác
-                    </th>
+                    {[
+                      "Hình ảnh",
+                      "Tên sản phẩm",
+                      "Danh mục",
+                      "Giá",
+                      "Tồn kho",
+                      "Trạng thái",
+                      "Thao tác",
+                    ].map((header) => (
+                      <th
+                        key={header}
+                        className={`px-6 py-3 text-xs font-medium text-gray-700 uppercase ${
+                          header === "Thao tác" ? "text-center" : "text-left"
+                        }`}
+                      >
+                        {header}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -466,17 +507,41 @@ export function AdminProductsPage() {
 
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-medium mb-2">
-                    URL hình ảnh
+                    Ảnh sản phẩm
                   </label>
-                  <input
-                    type="url"
-                    value={formData.image_url}
-                    onChange={(e) =>
-                      setFormData({ ...formData, image_url: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="https://..."
-                  />
+                  <div className="flex flex-col gap-3">
+                    {formData.image_url && (
+                      <img
+                        src={formData.image_url}
+                        alt="Xem trước sản phẩm"
+                        className="w-28 h-28 object-cover rounded border"
+                      />
+                    )}
+                    <label className="inline-flex w-fit items-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded-lg hover:bg-slate-50 cursor-pointer">
+                      <ImagePlus className="w-4 h-4" />
+                      <span>{uploading ? "Đang upload..." : "Upload ảnh"}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={uploading}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) void handleImageUpload(file);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.image_url}
+                      onChange={(e) =>
+                        setFormData({ ...formData, image_url: e.target.value })
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Hoặc dán URL ảnh https://..."
+                    />
+                  </div>
                 </div>
 
                 <div className="mb-6">
@@ -500,7 +565,7 @@ export function AdminProductsPage() {
 
                 <button
                   type="submit"
-                  disabled={saving}
+                  disabled={saving || uploading}
                   className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition flex items-center justify-center space-x-2 disabled:bg-blue-400"
                 >
                   <Save className="w-5 h-5" />

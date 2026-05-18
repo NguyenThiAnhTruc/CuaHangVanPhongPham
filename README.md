@@ -16,6 +16,9 @@ OfficeStore là website bán văn phòng phẩm xây dựng bằng Next.js App R
 - Giỏ hàng và đặt hàng
 - Trang cá nhân và lịch sử đơn hàng
 - Admin quản lý sản phẩm, đơn hàng
+- Admin quản lý danh mục sản phẩm
+- Admin upload ảnh sản phẩm bằng Supabase Storage
+- Dashboard admin thống kê doanh thu, trạng thái đơn hàng, tồn kho và chat
 - Admin xuất dữ liệu sản phẩm/đơn hàng dạng CSV mở được bằng Excel
 - Chat realtime giữa người mua và admin
 
