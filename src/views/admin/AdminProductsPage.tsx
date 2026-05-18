@@ -1,20 +1,65 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
+  CheckCircle2,
   Download,
   Edit2,
   ImagePlus,
+  Info,
   Plus,
   Save,
   Trash2,
   X,
 } from "lucide-react";
+import { PostgrestError } from "@supabase/supabase-js";
 import { downloadCsv } from "../../lib/exportCsv";
-import { supabase, Category, Product } from "../../lib/supabase";
+import {
+  supabase,
+  supabaseProjectUrl,
+  supabasePublicAnonKey,
+  Category,
+  Product,
+} from "../../lib/supabase";
 
-const emptyForm = {
+type ProductFormData = {
+  category_id: string;
+  name: string;
+  description: string;
+  price: string;
+  stock: string;
+  image_url: string;
+  is_active: boolean;
+};
+
+type SupabaseLikeError = PostgrestError | Error | { message: string } | null;
+type DialogTone = "success" | "error" | "info";
+
+type DialogState = {
+  tone: DialogTone;
+  title: string;
+  message: string;
+} | null;
+
+type ProductMutationData = {
+  category_id: string;
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  image_url: string;
+  is_active: boolean;
+  updated_at: string;
+};
+
+type AdminRestOptions = {
+  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  body?: ProductMutationData;
+  timeoutMs?: number;
+};
+
+const emptyForm: ProductFormData = {
   category_id: "",
   name: "",
   description: "",
@@ -24,16 +69,110 @@ const emptyForm = {
   is_active: true,
 };
 
-function withTimeout<T>(promise: PromiseLike<T>, timeoutMs = 15000) {
+function withTimeout<T>(promise: PromiseLike<T>, timeoutMs = 45000) {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   const timeoutPromise = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => {
-      reject(new Error("timeout"));
-    }, timeoutMs);
+    timeoutId = setTimeout(() => reject(new Error("timeout")), timeoutMs);
   });
 
   return Promise.race([Promise.resolve(promise), timeoutPromise]).finally(() => {
     if (timeoutId) clearTimeout(timeoutId);
+  });
+}
+
+function getErrorMessage(error: SupabaseLikeError, fallback: string) {
+  if (!error) return fallback;
+  if (error.message === "timeout") {
+    return "Supabase phản hồi quá lâu. Vui lòng kiểm tra mạng rồi thử lại.";
+  }
+  if (error.message.includes("row-level security")) {
+    return "Tài khoản hiện tại chưa có quyền admin để thực hiện thao tác này.";
+  }
+  if (error.message.includes("duplicate key")) {
+    return "Dữ liệu bị trùng. Vui lòng kiểm tra lại tên hoặc mã liên quan.";
+  }
+  return error.message || fallback;
+}
+
+async function getAdminAccessToken() {
+  const sessionResult = await withTimeout(supabase.auth.getSession(), 10000);
+  const session = sessionResult.data.session;
+
+  if (sessionResult.error || !session?.access_token) {
+    throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại tài khoản admin.");
+  }
+
+  return session.access_token;
+}
+
+async function parseRestError(response: Response) {
+  const text = await response.text();
+  if (!text) return "Không thể kết nối Supabase.";
+
+  try {
+    const parsed = JSON.parse(text) as {
+      message?: string;
+      hint?: string;
+      details?: string;
+    };
+    return parsed.message || parsed.hint || parsed.details || text;
+  } catch {
+    return text;
+  }
+}
+
+async function requestAdminRest<T>(
+  endpoint: string,
+  { method = "GET", body, timeoutMs = 30000 }: AdminRestOptions = {},
+) {
+  const accessToken = await getAdminAccessToken();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(`${supabaseProjectUrl}${endpoint}`, {
+      method,
+      headers: {
+        apikey: supabasePublicAnonKey,
+        Authorization: `Bearer ${accessToken}`,
+        "Accept-Profile": "public",
+        "Content-Profile": "public",
+        "Content-Type": "application/json",
+        ...(method === "GET" ? {} : { Prefer: "return=minimal" }),
+      },
+      body: method === "GET" || method === "DELETE" ? undefined : JSON.stringify(body),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(await parseRestError(response));
+    }
+
+    if (response.status === 204) return null as T;
+
+    const text = await response.text();
+    return (text ? JSON.parse(text) : null) as T;
+  } catch (error) {
+    if ((error as Error).name === "AbortError") {
+      throw new Error("Supabase phản hồi quá lâu. Vui lòng kiểm tra mạng rồi thử lại.");
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function requestProductMutation(
+  method: "POST" | "PATCH" | "DELETE",
+  productId?: string,
+  productData?: ProductMutationData,
+) {
+  const query = productId ? `?id=eq.${encodeURIComponent(productId)}` : "";
+  await requestAdminRest<null>(`/rest/v1/products${query}`, {
+    method,
+    body: productData,
+    timeoutMs: 90000,
   });
 }
 
@@ -42,54 +181,68 @@ export function AdminProductsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [dialog, setDialog] = useState<DialogState>(null);
+  const [deleteCandidate, setDeleteCandidate] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [formError, setFormError] = useState("");
-  const [formData, setFormData] = useState(emptyForm);
+  const [formData, setFormData] = useState<ProductFormData>(emptyForm);
 
   const categoryById = useMemo(() => {
     return new Map(categories.map((category) => [category.id, category.name]));
   }, [categories]);
 
-  const fetchProducts = async () => {
-    setLoading(true);
+  const showDialog = useCallback(
+    (tone: DialogTone, title: string, message: string) => {
+      setDialog({ tone, title, message });
+    },
+    [],
+  );
+
+  const fetchProducts = useCallback(async (showLoader = true) => {
+    if (showLoader) setLoading(true);
     setError("");
 
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      setError("Không thể tải danh sách sản phẩm. Vui lòng thử lại.");
-    } else {
+    try {
+      const data = await requestAdminRest<Product[]>(
+        "/rest/v1/products?select=*&order=created_at.desc",
+      );
       setProducts(data ?? []);
+    } catch (error) {
+      const message = getErrorMessage(
+        error as Error,
+        "Không thể tải danh sách sản phẩm.",
+      );
+      setError(message);
+      showDialog("error", "Không thể tải sản phẩm", message);
+    } finally {
+      if (showLoader) setLoading(false);
     }
+  }, [showDialog]);
 
-    setLoading(false);
-  };
-
-  const fetchCategories = async () => {
-    const { data, error } = await supabase
-      .from("categories")
-      .select("*")
-      .order("name");
-
-    if (error) {
-      setError("Không thể tải danh mục sản phẩm.");
-      return;
+  const fetchCategories = useCallback(async () => {
+    try {
+      const data = await requestAdminRest<Category[]>(
+        "/rest/v1/categories?select=*&order=name.asc",
+      );
+      setCategories(data ?? []);
+    } catch (error) {
+      const message = getErrorMessage(
+        error as Error,
+        "Không thể tải danh mục sản phẩm.",
+      );
+      setError(message);
+      showDialog("error", "Không thể tải danh mục", message);
     }
-
-    setCategories(data ?? []);
-  };
+  }, [showDialog]);
 
   useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-  }, []);
+    void fetchProducts();
+    void fetchCategories();
+  }, [fetchCategories, fetchProducts]);
 
   const openAddModal = () => {
     setEditingProduct(null);
@@ -132,57 +285,75 @@ export function AdminProductsPage() {
 
   const handleImageUpload = async (file: File) => {
     if (!file.type.startsWith("image/")) {
-      setFormError("Vui lòng chọn file hình ảnh.");
+      const message = "Vui lòng chọn file hình ảnh.";
+      setFormError(message);
+      showDialog("error", "File không hợp lệ", message);
       return;
     }
 
     if (file.size > 3 * 1024 * 1024) {
-      setFormError("Ảnh không được vượt quá 3MB.");
+      const message = "Ảnh không được vượt quá 3MB.";
+      setFormError(message);
+      showDialog("error", "Ảnh quá lớn", message);
       return;
     }
 
     setUploading(true);
     setFormError("");
 
-    const extension = file.name.split(".").pop() || "jpg";
-    const safeName = `${Date.now()}-${crypto.randomUUID()}.${extension}`;
-    const storagePath = `products/${safeName}`;
+    try {
+      const extension = file.name.split(".").pop() || "jpg";
+      const safeName = `${Date.now()}-${crypto.randomUUID()}.${extension}`;
+      const storagePath = `products/${safeName}`;
 
-    const { error } = await supabase.storage
-      .from("product-images")
-      .upload(storagePath, file, {
-        cacheControl: "3600",
-        upsert: false,
-      });
+      const { error } = await withTimeout(
+        supabase.storage.from("product-images").upload(storagePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+        }),
+        45000,
+      );
 
-    if (error) {
-      setFormError(error.message || "Không thể upload ảnh sản phẩm.");
+      if (error) {
+        const message = getErrorMessage(error, "Không thể upload ảnh sản phẩm.");
+        setFormError(message);
+        showDialog("error", "Upload ảnh thất bại", message);
+        return;
+      }
+
+      const { data } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(storagePath);
+
+      setFormData((current) => ({
+        ...current,
+        image_url: data.publicUrl,
+      }));
+      showDialog("success", "Upload ảnh thành công", "Ảnh sản phẩm đã được tải lên.");
+    } catch (err) {
+      const message = getErrorMessage(
+        err as Error,
+        "Không thể upload ảnh sản phẩm.",
+      );
+      setFormError(message);
+      showDialog("error", "Upload ảnh thất bại", message);
+    } finally {
       setUploading(false);
-      return;
     }
-
-    const { data } = supabase.storage
-      .from("product-images")
-      .getPublicUrl(storagePath);
-
-    setFormData((current) => ({
-      ...current,
-      image_url: data.publicUrl,
-    }));
-    setUploading(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (saving || uploading) return;
+
     setFormError("");
 
     const validationMessage = validateForm();
     if (validationMessage) {
       setFormError(validationMessage);
+      showDialog("error", "Dữ liệu chưa hợp lệ", validationMessage);
       return;
     }
-
-    setSaving(true);
 
     const productData = {
       category_id: formData.category_id,
@@ -195,65 +366,71 @@ export function AdminProductsPage() {
       updated_at: new Date().toISOString(),
     };
 
+    setSaving(true);
+
     try {
-      const result = editingProduct
-        ? await withTimeout(
-            supabase
-              .from("products")
-              .update(productData)
-              .eq("id", editingProduct.id)
-              .select("*")
-              .single(),
-          )
-        : await withTimeout(
-            supabase.from("products").insert(productData).select("*").single(),
-          );
-
-      if (result.error) {
-        setFormError(result.error.message || "Không thể lưu sản phẩm.");
-        return;
-      }
-
-      const savedProduct = result.data as Product;
-      setProducts((current) =>
-        editingProduct
-          ? current.map((product) =>
-              product.id === savedProduct.id ? savedProduct : product,
-            )
-          : [savedProduct, ...current],
+      await requestProductMutation(
+        editingProduct ? "PATCH" : "POST",
+        editingProduct?.id,
+        productData,
       );
+
       setIsModalOpen(false);
-    } catch {
-      setFormError(
-        "Supabase phản hồi quá lâu. Vui lòng kiểm tra mạng rồi bấm lưu lại.",
+      await fetchProducts(false);
+      showDialog(
+        "success",
+        editingProduct ? "Cập nhật thành công" : "Thêm sản phẩm thành công",
+        editingProduct
+          ? "Sản phẩm đã được cập nhật trong danh sách quản trị."
+          : "Thêm sản phẩm thành công.",
       );
+    } catch (err) {
+      if ((err as Error).message !== "timeout") {
+        console.warn("SAVE PRODUCT UNEXPECTED WARNING:", err);
+      }
+      const message = getErrorMessage(err as Error, "Không thể lưu sản phẩm.");
+      setFormError(message);
+      showDialog("error", "Lưu sản phẩm thất bại", message);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (product: Product) => {
-    const ok = confirm(`Bạn có chắc muốn xóa "${product.name}"?`);
-    if (!ok) return;
+  const handleDelete = (product: Product) => {
+    if (deletingId) return;
+    setDeleteCandidate(product);
+  };
+
+  const confirmDeleteProduct = async () => {
+    const product = deleteCandidate;
+    if (!product || deletingId) return;
 
     setDeletingId(product.id);
     setError("");
 
-    const { error } = await supabase.from("products").delete().eq("id", product.id);
+    try {
+      await requestProductMutation("DELETE", product.id);
 
-    setDeletingId(null);
-
-    if (error) {
-      setError(error.message || "Không thể xóa sản phẩm.");
-      return;
+      setProducts((current) => current.filter((item) => item.id !== product.id));
+      setDeleteCandidate(null);
+      showDialog("success", "Xóa sản phẩm thành công", `Đã xóa sản phẩm "${product.name}".`);
+    } catch (err) {
+      if ((err as Error).message !== "timeout") {
+        console.warn("DELETE PRODUCT UNEXPECTED WARNING:", err);
+      }
+      const message = getErrorMessage(err as Error, "Không thể xóa sản phẩm.");
+      setError(message);
+      showDialog("error", "Xóa sản phẩm thất bại", message);
+    } finally {
+      setDeletingId(null);
     }
-
-    await fetchProducts();
   };
 
   const handleExportProducts = () => {
     if (products.length === 0) {
-      setError("Không có sản phẩm để xuất file.");
+      const message = "Không có sản phẩm để xuất file.";
+      setError(message);
+      showDialog("info", "Chưa có dữ liệu", message);
       return;
     }
 
@@ -272,6 +449,7 @@ export function AdminProductsPage() {
         "Ngày cập nhật": formatDate(product.updated_at),
       })),
     );
+    showDialog("success", "Xuất file thành công", "Đã xuất file sản phẩm.");
   };
 
   const formatPrice = (price: number) => {
@@ -438,7 +616,7 @@ export function AdminProductsPage() {
                 </h2>
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  disabled={saving}
+                  disabled={saving || uploading}
                   className="text-gray-500 hover:text-gray-700 disabled:opacity-50"
                 >
                   <X className="w-6 h-6" />
@@ -610,6 +788,91 @@ export function AdminProductsPage() {
                   </span>
                 </button>
               </form>
+            </div>
+          </div>
+        )}
+
+        {deleteCandidate && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+              <div className="px-6 py-5 border-b">
+                <h3 className="text-xl font-bold text-gray-900">
+                  Xác nhận xóa sản phẩm
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Thao tác này sẽ xóa sản phẩm khỏi hệ thống.
+                </p>
+              </div>
+              <div className="px-6 py-5">
+                <p className="text-gray-700">
+                  Bạn có chắc muốn xóa{" "}
+                  <span className="font-semibold text-gray-900">
+                    {deleteCandidate.name}
+                  </span>
+                  ?
+                </p>
+              </div>
+              <div className="px-6 py-4 bg-slate-50 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeleteCandidate(null)}
+                  disabled={Boolean(deletingId)}
+                  className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void confirmDeleteProduct()}
+                  disabled={Boolean(deletingId)}
+                  className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:bg-red-400"
+                >
+                  {deletingId ? "Đang xóa..." : "Xóa sản phẩm"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {dialog && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+              <div className="px-6 py-5 flex items-start gap-3">
+                <div
+                  className={`mt-1 rounded-full p-2 ${
+                    dialog.tone === "success"
+                      ? "bg-green-100 text-green-700"
+                      : dialog.tone === "error"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-blue-100 text-blue-700"
+                  }`}
+                >
+                  {dialog.tone === "success" ? (
+                    <CheckCircle2 className="w-6 h-6" />
+                  ) : dialog.tone === "error" ? (
+                    <AlertCircle className="w-6 h-6" />
+                  ) : (
+                    <Info className="w-6 h-6" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {dialog.title}
+                  </h3>
+                  <p className="text-gray-600 mt-2 leading-relaxed">
+                    {dialog.message}
+                  </p>
+                </div>
+              </div>
+              <div className="px-6 py-4 bg-slate-50 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setDialog(null)}
+                  className="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Đóng
+                </button>
+              </div>
             </div>
           </div>
         )}

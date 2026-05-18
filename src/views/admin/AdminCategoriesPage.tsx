@@ -24,6 +24,7 @@ export function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [deleteCandidate, setDeleteCandidate] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -114,9 +115,14 @@ export function AdminCategoriesPage() {
     await fetchCategories();
   };
 
-  const handleDelete = async (category: Category) => {
-    const ok = confirm(`Bạn có chắc muốn xóa danh mục "${category.name}"?`);
-    if (!ok) return;
+  const handleDelete = (category: Category) => {
+    if (deletingId) return;
+    setDeleteCandidate(category);
+  };
+
+  const confirmDeleteCategory = async () => {
+    const category = deleteCandidate;
+    if (!category || deletingId) return;
 
     setDeletingId(category.id);
     setError("");
@@ -126,13 +132,14 @@ export function AdminCategoriesPage() {
       .delete()
       .eq("id", category.id);
 
-    setDeletingId(null);
-
     if (error) {
       setError(error.message || "Không thể xóa danh mục.");
+      setDeletingId(null);
       return;
     }
 
+    setDeleteCandidate(null);
+    setDeletingId(null);
     await fetchCategories();
   };
 
@@ -324,6 +331,48 @@ export function AdminCategoriesPage() {
                   </span>
                 </button>
               </form>
+            </div>
+          </div>
+        )}
+
+        {deleteCandidate && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+              <div className="px-6 py-5 border-b">
+                <h3 className="text-xl font-bold text-gray-900">
+                  Xác nhận xóa danh mục
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Sản phẩm thuộc danh mục này sẽ chuyển sang chưa phân loại.
+                </p>
+              </div>
+              <div className="px-6 py-5">
+                <p className="text-gray-700">
+                  Bạn có chắc muốn xóa{" "}
+                  <span className="font-semibold text-gray-900">
+                    {deleteCandidate.name}
+                  </span>
+                  ?
+                </p>
+              </div>
+              <div className="px-6 py-4 bg-slate-50 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeleteCandidate(null)}
+                  disabled={Boolean(deletingId)}
+                  className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void confirmDeleteCategory()}
+                  disabled={Boolean(deletingId)}
+                  className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:bg-red-400"
+                >
+                  {deletingId ? "Đang xóa..." : "Xóa danh mục"}
+                </button>
+              </div>
             </div>
           </div>
         )}

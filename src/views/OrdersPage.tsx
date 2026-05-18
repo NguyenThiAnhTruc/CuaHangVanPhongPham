@@ -17,7 +17,10 @@ export function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [orderItems, setOrderItems] = useState<Record<string, OrderItem[]>>({});
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const [cancelCandidate, setCancelCandidate] = useState<Order | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const { user } = useAuth();
 
   const fetchOrderItems = useCallback(async (orderId: string) => {
@@ -63,6 +66,43 @@ export function OrdersPage() {
       }
       return newSet;
     });
+  };
+
+  const handleCancelOrder = (order: Order) => {
+    if (order.status !== "pending" || cancellingId) return;
+    setCancelCandidate(order);
+  };
+
+  const confirmCancelOrder = async () => {
+    const order = cancelCandidate;
+    if (!order || cancellingId) return;
+
+    setCancellingId(order.id);
+    setError("");
+
+    const { error } = await supabase.rpc("cancel_pending_order", {
+      p_order_id: order.id,
+    });
+
+    setCancellingId(null);
+
+    if (error) {
+      setError(
+        error.message.includes("order_not_pending")
+          ? "Chỉ có thể hủy đơn hàng đang chờ xác nhận."
+          : "Không thể hủy đơn hàng. Vui lòng thử lại.",
+      );
+      return;
+    }
+
+    setCancelCandidate(null);
+    setOrders((current) =>
+      current.map((item) =>
+        item.id === order.id
+          ? { ...item, status: "cancelled", updated_at: new Date().toISOString() }
+          : item,
+      ),
+    );
   };
 
   const formatPrice = (price: number) => {
@@ -142,6 +182,12 @@ export function OrdersPage() {
           Đơn hàng của tôi
         </h1>
 
+        {error && (
+          <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-4">
+            {error}
+          </div>
+        )}
+
         <div className="space-y-4">
           {orders.map((order) => (
             <div
@@ -166,7 +212,18 @@ export function OrdersPage() {
                       {formatPrice(order.total_amount)}
                     </p>
                   </div>
-                  <div>{getStatusBadge(order.status)}</div>
+                  <div className="flex flex-col items-start md:items-end gap-2">
+                    {getStatusBadge(order.status)}
+                    {order.status === "pending" && (
+                      <button
+                        onClick={() => handleCancelOrder(order)}
+                        disabled={cancellingId === order.id}
+                        className="text-sm text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
+                      >
+                        Hủy đơn
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="border-t pt-4">
@@ -238,6 +295,48 @@ export function OrdersPage() {
             </div>
           ))}
         </div>
+
+        {cancelCandidate && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+              <div className="px-6 py-5 border-b">
+                <h3 className="text-xl font-bold text-gray-900">
+                  Xác nhận hủy đơn hàng
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Bạn chỉ có thể hủy đơn khi đơn còn chờ xác nhận.
+                </p>
+              </div>
+              <div className="px-6 py-5">
+                <p className="text-gray-700">
+                  Hủy đơn hàng{" "}
+                  <span className="font-mono font-semibold text-gray-900">
+                    {cancelCandidate.id.slice(0, 8).toUpperCase()}
+                  </span>
+                  ?
+                </p>
+              </div>
+              <div className="px-6 py-4 bg-slate-50 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCancelCandidate(null)}
+                  disabled={Boolean(cancellingId)}
+                  className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Không
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void confirmCancelOrder()}
+                  disabled={Boolean(cancellingId)}
+                  className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:bg-red-400"
+                >
+                  {cancellingId ? "Đang hủy..." : "Hủy đơn"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
