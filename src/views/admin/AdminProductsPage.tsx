@@ -24,6 +24,19 @@ const emptyForm = {
   is_active: true,
 };
 
+function withTimeout<T>(promise: PromiseLike<T>, timeoutMs = 15000) {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error("timeout"));
+    }, timeoutMs);
+  });
+
+  return Promise.race([Promise.resolve(promise), timeoutPromise]).finally(() => {
+    if (timeoutId) clearTimeout(timeoutId);
+  });
+}
+
 export function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -182,22 +195,41 @@ export function AdminProductsPage() {
       updated_at: new Date().toISOString(),
     };
 
-    const { error } = editingProduct
-      ? await supabase
-          .from("products")
-          .update(productData)
-          .eq("id", editingProduct.id)
-      : await supabase.from("products").insert(productData);
+    try {
+      const result = editingProduct
+        ? await withTimeout(
+            supabase
+              .from("products")
+              .update(productData)
+              .eq("id", editingProduct.id)
+              .select("*")
+              .single(),
+          )
+        : await withTimeout(
+            supabase.from("products").insert(productData).select("*").single(),
+          );
 
-    setSaving(false);
+      if (result.error) {
+        setFormError(result.error.message || "Không thể lưu sản phẩm.");
+        return;
+      }
 
-    if (error) {
-      setFormError(error.message || "Không thể lưu sản phẩm.");
-      return;
+      const savedProduct = result.data as Product;
+      setProducts((current) =>
+        editingProduct
+          ? current.map((product) =>
+              product.id === savedProduct.id ? savedProduct : product,
+            )
+          : [savedProduct, ...current],
+      );
+      setIsModalOpen(false);
+    } catch {
+      setFormError(
+        "Supabase phản hồi quá lâu. Vui lòng kiểm tra mạng rồi bấm lưu lại.",
+      );
+    } finally {
+      setSaving(false);
     }
-
-    setIsModalOpen(false);
-    await fetchProducts();
   };
 
   const handleDelete = async (product: Product) => {
