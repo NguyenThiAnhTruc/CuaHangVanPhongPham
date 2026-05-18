@@ -24,7 +24,7 @@ OfficeStore là website bán văn phòng phẩm xây dựng bằng Next.js App R
 Admin:
 
 ```text
-Email: nguyentruc02092004@gmail.com
+Email: admin@gmail.com
 Password: 123456
 ```
 

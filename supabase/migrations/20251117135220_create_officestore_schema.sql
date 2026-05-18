@@ -834,7 +834,7 @@ BEGIN
     AND (
       user_id IN (v_admin_id, v_user_id)
       OR provider_id IN (
-        'nguyentruc02092004@gmail.com',
+        'admin@gmail.com',
         'user1@gmail.com',
         v_admin_id::text,
         v_user_id::text
@@ -843,7 +843,7 @@ BEGIN
 
   DELETE FROM auth.users
   WHERE id IN (v_admin_id, v_user_id)
-     OR email IN ('nguyentruc02092004@gmail.com', 'user1@gmail.com');
+     OR email IN ('admin@gmail.com', 'nguyentruc02092004@gmail.com', 'user1@gmail.com');
 
   INSERT INTO auth.users (
     instance_id,
@@ -868,7 +868,7 @@ BEGIN
     v_admin_id,
     'authenticated',
     'authenticated',
-    'nguyentruc02092004@gmail.com',
+    'admin@gmail.com',
     crypt('123456', gen_salt('bf')),
     now(),
     now(),
@@ -929,7 +929,7 @@ BEGIN
     v_admin_id::text,
     jsonb_build_object(
       'sub', v_admin_id::text,
-      'email', 'nguyentruc02092004@gmail.com',
+      'email', 'admin@gmail.com',
       'email_verified', true,
       'phone_verified', false
     ),
@@ -956,7 +956,7 @@ BEGIN
 
   INSERT INTO profiles (id, email, full_name, is_admin)
   VALUES
-    (v_admin_id, 'nguyentruc02092004@gmail.com', 'Admin', true),
+    (v_admin_id, 'admin@gmail.com', 'Admin', true),
     (v_user_id, 'user1@gmail.com', 'User', false)
   ON CONFLICT (id) DO UPDATE
   SET
