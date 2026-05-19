@@ -1,262 +1,298 @@
-# OfficeStore - Hệ thống Bán hàng Văn phòng Phẩm
+# Chức Năng Dự Án OfficeStore
 
-## Tổng quan
+## 1. Tổng Quan
 
-OfficeStore là một nền tảng e-commerce hiện đại cho phép khách hàng mua bán văn phòng phẩm trực tuyến. Hệ thống tích hợp đầy đủ các tính năng quản lý sản phẩm, đơn hàng, giỏ hàng và tài khoản người dùng.
+**OfficeStore** là website bán văn phòng phẩm trực tuyến được xây dựng bằng **Next.js App Router**, **TypeScript**, **Tailwind CSS** và **Supabase**. Dự án hỗ trợ người dùng mua hàng, quản lý giỏ hàng, đặt hàng, theo dõi đơn hàng và trao đổi trực tiếp với admin. Phía quản trị viên có các chức năng quản lý sản phẩm, danh mục, đơn hàng, chat và xuất dữ liệu.
 
-## Kiến trúc Công nghệ
+## 2. Công Nghệ Sử Dụng
 
-- **Frontend**: Next.js + React 18 + TypeScript + Tailwind CSS
-- **Backend**: Supabase (PostgreSQL + Auth + Real-time)
-- **Package Manager**: npm
-- **Build Tool**: Next.js
+- **Frontend:** Next.js App Router, React, TypeScript.
+- **CSS/UI:** Tailwind CSS, lucide-react icons.
+- **Backend:** Supabase Auth, PostgreSQL Database, Storage, Realtime.
+- **Bảo mật:** Row Level Security cho từng nhóm user/admin.
+- **Triển khai:** Dockerfile và Docker Compose.
+- **Quản lý source:** Git/GitHub.
 
-## Cơ Sở Dữ Liệu
+## 3. Chức Năng Người Dùng
 
-### Bảng chính
+### 3.1. Đăng Ký Và Đăng Nhập
 
-1. **profiles** - Thông tin người dùng
-   - id (uuid, PK)
-   - email (text, unique)
-   - full_name (text)
-   - phone (text)
-   - address (text)
-   - is_admin (boolean)
-   - created_at, updated_at (timestamptz)
+- Đăng ký tài khoản bằng email và mật khẩu.
+- Đăng nhập bằng email và mật khẩu.
+- Đăng nhập bằng Google/Facebook thông qua Supabase OAuth.
+- Tự động tạo profile sau khi đăng ký hoặc đăng nhập OAuth.
+- Lưu thông tin phiên đăng nhập bằng Supabase Auth.
 
-2. **categories** - Danh mục sản phẩm
-   - id (uuid, PK)
-   - name (text)
-   - description (text)
-   - slug (text, unique)
-   - created_at (timestamptz)
+### 3.2. Xem Sản Phẩm
 
-3. **products** - Sản phẩm
-   - id (uuid, PK)
-   - category_id (uuid, FK)
-   - name (text)
-   - description (text)
-   - price (numeric)
-   - stock (integer)
-   - image_url (text)
-   - is_active (boolean)
-   - created_at, updated_at (timestamptz)
+- Xem sản phẩm nổi bật ở trang chủ.
+- Xem danh sách sản phẩm đang hoạt động.
+- Lọc sản phẩm theo danh mục.
+- Tìm kiếm sản phẩm theo tên.
+- Xem điểm đánh giá trung bình và số lượt đánh giá.
+- Xem chi tiết sản phẩm gồm:
+  - Tên sản phẩm.
+  - Mô tả.
+  - Giá bán.
+  - Tồn kho.
+  - Ảnh sản phẩm.
+  - Danh sách đánh giá.
 
-4. **cart_items** - Giỏ hàng
-   - id (uuid, PK)
-   - user_id (uuid, FK)
-   - product_id (uuid, FK)
-   - quantity (integer)
-   - created_at, updated_at (timestamptz)
+### 3.3. Sản Phẩm Yêu Thích
 
-5. **orders** - Đơn hàng
-   - id (uuid, PK)
-   - user_id (uuid, FK)
-   - total_amount (numeric)
-   - status (text): pending, confirmed, shipping, delivered, cancelled
-   - customer_name (text)
-   - customer_phone (text)
-   - customer_address (text)
-   - notes (text)
-   - created_at, updated_at (timestamptz)
+- Người dùng có thể bấm tim để lưu sản phẩm yêu thích.
+- Có trang riêng để xem danh sách sản phẩm yêu thích.
+- Có thể bỏ lưu sản phẩm khỏi danh sách yêu thích.
+- Có thể thêm sản phẩm yêu thích vào giỏ hàng.
 
-6. **order_items** - Chi tiết đơn hàng
-   - id (uuid, PK)
-   - order_id (uuid, FK)
-   - product_id (uuid, FK)
-   - product_name (text)
-   - quantity (integer)
-   - price (numeric)
-   - created_at (timestamptz)
+### 3.4. Đánh Giá Sản Phẩm
 
-## Tính năng chính
+- Người dùng xem đánh giá của các khách hàng khác.
+- Hiển thị số sao trung bình của sản phẩm.
+- Người dùng chỉ được đánh giá sản phẩm đã mua và đơn hàng đã giao thành công.
+- Mỗi người dùng chỉ có một đánh giá cho mỗi sản phẩm.
+- Người dùng có thể cập nhật lại đánh giá của mình.
+- Admin có thể quản lý/ẩn đánh giá thông qua quyền RLS.
 
-### Cho Khách hàng (Guest/Customer)
+### 3.5. Giỏ Hàng
 
-#### Đăng ký & Đăng nhập
+- Thêm sản phẩm vào giỏ hàng.
+- Tăng/giảm số lượng sản phẩm.
+- Không cho vượt quá số lượng tồn kho.
+- Xóa sản phẩm khỏi giỏ hàng.
+- Tính tổng tiền giỏ hàng.
+- Cập nhật số lượng sản phẩm trên biểu tượng giỏ hàng.
 
-- Tạo tài khoản với email và mật khẩu
-- Đăng nhập an toàn bằng Supabase Auth
-- Quản lý phiên làm việc tự động
-- Xác thực lỗi chi tiết
+### 3.6. Thanh Toán Và Đặt Hàng
 
-#### Xem sản phẩm
+- Nhập thông tin giao hàng:
+  - Họ tên.
+  - Số điện thoại.
+  - Địa chỉ.
+  - Ghi chú đơn hàng.
+- Kiểm tra số điện thoại hợp lệ.
+- Chọn phương thức thanh toán:
+  - Thanh toán khi nhận hàng.
+  - Chuyển khoản ngân hàng.
+- Kiểm tra giỏ hàng rỗng trước khi đặt hàng.
+- Kiểm tra tồn kho lần cuối trước khi tạo đơn.
+- Tạo đơn hàng từ giỏ hàng bằng RPC `create_order_from_cart`.
+- Tự động trừ tồn kho sau khi đặt hàng.
+- Tự động xóa giỏ hàng sau khi đặt hàng thành công.
+- Hiển thị mã đơn hàng sau khi đặt hàng thành công.
 
-- Trang chủ hiển thị sản phẩm nổi bật
-- Danh sách đầy đủ sản phẩm với lọc theo danh mục
-- Tìm kiếm sản phẩm theo tên
-- Xem chi tiết sản phẩm (mô tả, giá, tồn kho)
-- Hiển thị hình ảnh từ Pexels
+### 3.7. Quản Lý Đơn Hàng Cá Nhân
 
-#### Giỏ hàng
+- Xem danh sách đơn hàng của tài khoản đang đăng nhập.
+- Xem trạng thái đơn hàng:
+  - Chờ xác nhận.
+  - Đã xác nhận.
+  - Đang giao hàng.
+  - Đã giao hàng.
+  - Đã hủy.
+- Xem thông tin người nhận và địa chỉ giao hàng.
+- Xem ghi chú và phương thức thanh toán trong đơn hàng.
+- Xem chi tiết sản phẩm trong đơn.
+- Hủy đơn hàng khi đơn còn trạng thái chờ xác nhận.
+- Khi hủy đơn, hệ thống cộng lại tồn kho bằng RPC `cancel_pending_order`.
 
-- Thêm sản phẩm vào giỏ (kiểm tra tồn kho)
-- Cập nhật số lượng sản phẩm
-- Xóa sản phẩm khỏi giỏ
-- Hiển thị tổng giá
-- Kiểm tra tồn kho trước khi mua
+### 3.8. Hồ Sơ Cá Nhân
 
-#### Đặt hàng
+- Xem thông tin tài khoản.
+- Cập nhật họ tên.
+- Cập nhật số điện thoại.
+- Cập nhật địa chỉ mặc định.
+- Thông tin profile được dùng mặc định ở trang thanh toán.
 
-- Nhập thông tin giao hàng
-- Thêm ghi chú đơn hàng tùy chọn
-- Kiểm tra tồn kho cuối cùng trước khi thanh toán
-- Xác nhận đơn hàng thành công
-- Tự động xóa giỏ hàng sau khi đặt
+### 3.9. Chat Với Admin
 
-#### Quản lý đơn hàng (Khách hàng)
+- Người dùng mở cửa sổ chat để trao đổi với admin.
+- Gửi tin nhắn hỏi về sản phẩm, giá bán, tồn kho, thanh toán, giao hàng hoặc đơn hàng.
+- Xem lại lịch sử tin nhắn.
+- Tin nhắn được lưu vào Supabase Database.
+- Hỗ trợ Realtime để cập nhật hội thoại.
 
-- Xem danh sách đơn hàng của mình
-- Xem chi tiết mỗi đơn hàng (sản phẩm, số lượng, giá)
-- Theo dõi trạng thái đơn hàng
-- Xem thông tin giao hàng
+## 4. Chức Năng Admin
 
-#### Quản lý tài khoản
+### 4.1. Dashboard Quản Trị
 
-- Cập nhật họ và tên
-- Cập nhật số điện thoại
-- Cập nhật địa chỉ mặc định
-- Thông tin được dùng làm mặc định khi đặt hàng
+- Xem tổng số sản phẩm.
+- Xem số đơn hàng.
+- Xem doanh thu.
+- Xem đơn đang chờ xử lý.
+- Xem sản phẩm tồn kho thấp.
+- Truy cập nhanh đến quản lý sản phẩm, danh mục, đơn hàng và chat.
 
-### Cho Quản trị viên (Admin)
+### 4.2. Quản Lý Sản Phẩm
 
-#### Quản lý sản phẩm
+- Xem toàn bộ sản phẩm, bao gồm sản phẩm đang ẩn.
+- Thêm sản phẩm mới.
+- Sửa thông tin sản phẩm.
+- Xóa sản phẩm.
+- Cập nhật:
+  - Danh mục.
+  - Tên sản phẩm.
+  - Mô tả.
+  - Giá bán.
+  - Tồn kho.
+  - Ảnh sản phẩm.
+  - Trạng thái hiển thị.
+- Upload ảnh sản phẩm lên Supabase Storage.
+- Lưu URL ảnh công khai vào bảng `products`.
+- Xuất danh sách sản phẩm dạng CSV mở được bằng Excel.
+- Dùng hộp thoại trong ứng dụng để báo lỗi/thành công, không dùng hộp thoại mặc định của trình duyệt.
 
-- Xem danh sách tất cả sản phẩm
-- Thêm sản phẩm mới
-- Chỉnh sửa sản phẩm
-- Xóa sản phẩm
-- Cập nhật giá
-- Cập nhật tồn kho
-- Hiển thị/ẩn sản phẩm
+### 4.3. Quản Lý Danh Mục
 
-#### Quản lý đơn hàng
+- Xem danh sách danh mục sản phẩm.
+- Thêm danh mục mới.
+- Sửa danh mục.
+- Xóa danh mục.
+- Tự động tạo slug từ tên danh mục.
+- Dùng modal xác nhận xóa danh mục.
 
-- Xem danh sách tất cả đơn hàng
-- Cập nhật trạng thái đơn hàng (pending → confirmed → shipping → delivered)
-- Hủy đơn hàng
-- Xem chi tiết sản phẩm trong đơn hàng
-- Xem thông tin giao hàng khách hàng
+### 4.4. Quản Lý Đơn Hàng
 
-## Bảo mật (RLS - Row Level Security)
+- Xem tất cả đơn hàng của người dùng.
+- Xem thông tin khách hàng.
+- Xem địa chỉ giao hàng.
+- Xem ghi chú và phương thức thanh toán.
+- Xem chi tiết sản phẩm trong từng đơn hàng.
+- Cập nhật trạng thái đơn hàng:
+  - Chờ xác nhận.
+  - Đã xác nhận.
+  - Đang giao hàng.
+  - Đã giao hàng.
+  - Đã hủy.
+- Xuất dữ liệu đơn hàng dạng CSV.
 
-### Policies
+### 4.5. Quản Lý Chat
 
-**Profiles:**
+- Xem danh sách cuộc trò chuyện với khách hàng.
+- Xem tin nhắn mới nhất.
+- Xem số tin nhắn chưa đọc.
+- Đọc nội dung hội thoại.
+- Trả lời tin nhắn của từng khách hàng.
+- Đánh dấu tin nhắn đã đọc.
+- Đóng/mở trạng thái cuộc trò chuyện.
 
-- Người dùng có thể xem profile của mình
-- Người dùng có thể cập nhật profile của mình
-- Admin có thể xem tất cả profiles
+## 5. Chức Năng Supabase
 
-**Products:**
+### 5.1. Auth
 
-- Ai cũng có thể xem sản phẩm hoạt động (is_active=true)
-- Admin có thể xem tất cả sản phẩm
-- Chỉ Admin có thể thêm/sửa/xóa sản phẩm
+- Đăng ký và đăng nhập email/password.
+- OAuth Google/Facebook.
+- Tự tạo profile khi có user mới.
+- Phân quyền admin bằng trường `is_admin`.
 
-**Cart Items:**
+### 5.2. Database
 
-- Người dùng chỉ có thể quản lý giỏ của mình
+Các bảng chính:
 
-**Orders:**
+- `profiles`
+- `categories`
+- `products`
+- `cart_items`
+- `orders`
+- `order_items`
+- `product_images`
+- `category_images`
+- `profile_avatars`
+- `conversations`
+- `messages`
+- `wishlist_items`
+- `product_reviews`
 
-- Người dùng chỉ có thể xem đơn hàng của mình
-- Admin có thể xem/cập nhật tất cả đơn hàng
+### 5.3. Row Level Security
 
-**Order Items:**
+- Người dùng chỉ xem và sửa profile của chính mình.
+- Người dùng chỉ quản lý giỏ hàng của chính mình.
+- Người dùng chỉ xem đơn hàng của chính mình.
+- Admin có quyền quản lý sản phẩm, danh mục và đơn hàng.
+- Admin có quyền xem và trả lời chat của khách hàng.
+- Public có thể xem danh mục và sản phẩm đang hoạt động.
 
-- Người dùng có thể xem chi tiết đơn hàng của mình
-- Admin có thể xem tất cả chi tiết đơn hàng
+### 5.4. RPC
 
-## Thông báo (Toast)
+- `create_order_from_cart`: tạo đơn từ giỏ hàng, kiểm tra tồn kho, trừ tồn kho và xóa giỏ hàng.
+- `cancel_pending_order`: cho phép khách hủy đơn đang chờ xác nhận và cộng lại tồn kho.
+- `send_customer_message`: khách gửi tin nhắn cho admin.
+- `send_admin_message`: admin trả lời tin nhắn.
+- `get_admin_conversations`: admin lấy danh sách hội thoại.
+- `get_conversation_messages`: lấy tin nhắn trong một hội thoại.
+- `mark_conversation_messages_read`: đánh dấu tin nhắn đã đọc.
+- `has_user_purchased_product`: kiểm tra người dùng đã mua và nhận sản phẩm để được đánh giá.
 
-Hệ thống thông báo ngữ cảnh:
+### 5.5. Storage
 
-- **Success**: Thêm vào giỏ hàng thành công
-- **Error**: Lỗi khi thêm vào giỏ, không đủ tồn kho
-- **Info**: Thông tin chung
+- Bucket `product-images` cho ảnh sản phẩm.
+- Bucket `category-images` cho ảnh danh mục.
+- Bucket `user-avatars` cho ảnh đại diện.
+- Policy upload ảnh sản phẩm/danh mục chỉ dành cho admin.
 
-## Xác thực lỗi
+### 5.6. Realtime
 
-### Đăng ký
+- Bật realtime cho bảng chat.
+- Hỗ trợ cập nhật hội thoại và tin nhắn giữa user/admin.
 
-- Kiểm tra email trống/hợp lệ
-- Kiểm tra mật khẩu ≥ 6 ký tự
-- Kiểm tra mật khẩu xác nhận khớp
-- Kiểm tra họ và tên ≥ 3 ký tự
-- Kiểm tra email đã đăng ký
+## 6. Bảo Mật Và Kiểm Tra Dữ Liệu
 
-### Đăng nhập
+- Không lưu service role key ở frontend.
+- Không commit file `.env`.
+- Dùng `.env.example` để hướng dẫn cấu hình biến môi trường.
+- Kiểm tra quyền admin bằng hàm `public.is_admin()`.
+- Dùng RPC `SECURITY DEFINER` cho các thao tác cần bảo vệ như tạo đơn, hủy đơn và chat.
+- Kiểm tra tồn kho ở cả frontend và database.
+- Không cho user tự ý cập nhật đơn hàng trực tiếp.
 
-- Kiểm tra email/mật khẩu trống
-- Thông báo sai thông tin
-- Kiểm tra email xác nhận
+## 7. Docker Và Triển Khai
 
-### Giỏ hàng và Thanh toán
+- Có `Dockerfile` để build ứng dụng Next.js.
+- Có `docker-compose.yml` để chạy container.
+- App chạy mặc định ở cổng `3000`.
+- Có thể triển khai lên VPS với domain và SSL.
+- Khi deploy cần cấu hình:
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - URL redirect OAuth trong Supabase.
 
-- Kiểm tra tồn kho trước thêm
-- Kiểm tra tồn kho khi cập nhật số lượng
-- Ngăn vượt quá tồn kho
+## 8. Tài Khoản Demo
 
-### Thanh toán
+### Admin
 
-- Kiểm tra thông tin giao hàng đầy đủ
-- Kiểm tra tồn kho cuối cùng
-- Kiểm tra tính toán giá đúng
-
-## Hướng dẫn sử dụng
-
-### Bắt đầu
-
-1. Truy cập trang chủ
-2. Xem sản phẩm nổi bật hoặc lọc theo danh mục
-3. Đăng ký tài khoản mới (hoặc đăng nhập)
-4. Thêm sản phẩm vào giỏ hàng
-5. Xem giỏ hàng và tiến hành thanh toán
-6. Nhập thông tin giao hàng
-7. Xác nhận đơn hàng
-8. Theo dõi đơn hàng trong "Đơn hàng của tôi"
-
-### Cho Admin
-
-1. Đăng nhập với tài khoản admin
-2. Truy cập "Quản trị" từ navigation
-3. Quản lý sản phẩm hoặc đơn hàng
-4. Cập nhật trạng thái đơn hàng khi cần
-
-## Môi trường
-
-```sql
-NEXT_PUBLIC_SUPABASE_URL=<your_supabase_url>
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<your_anon_key>
+```text
+Email: admin@gmail.com
+Password: 123456
 ```
 
-## Chạy ứng dụng
+### User
+
+```text
+Email: user1@gmail.com
+Password: 123456
+```
+
+## 9. Kiểm Tra Dự Án
+
+Các lệnh kiểm tra:
 
 ```bash
-# Phát triển
-npm run dev
-
-# Build
+npm run typecheck
+npm run lint
 npm run build
-
-# Xem trước
-npm run preview
 ```
 
-## Dữ liệu mẫu
+Các chức năng cần test thủ công:
 
-Hệ thống được tải sẵn với:
-
-- 5 danh mục sản phẩm
-- 12 sản phẩm mẫu với hình ảnh
-
-## Tính năng trong tương lai
-
-- Thanh toán trực tuyến (Stripe)
-- Đánh giá sản phẩm
-- Yêu thích sản phẩm
-- Email thông báo
-- Theo dõi đơn hàng real-time
-- Báo cáo thống kê cho admin
-- Chat hỗ trợ khách hàng
+- Đăng nhập admin.
+- Đăng nhập user.
+- Xem sản phẩm.
+- Thêm sản phẩm vào giỏ.
+- Đặt hàng.
+- Hủy đơn khi đơn còn chờ xác nhận.
+- Admin cập nhật trạng thái đơn.
+- Admin thêm/sửa/xóa sản phẩm.
+- Admin upload ảnh sản phẩm.
+- Admin thêm/sửa/xóa danh mục.
+- Chat user với admin.
+- Xuất file CSV sản phẩm và đơn hàng.

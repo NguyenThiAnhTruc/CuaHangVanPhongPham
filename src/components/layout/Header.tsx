@@ -1,10 +1,13 @@
 "use client";
 
 import {
+  Heart,
+  Home,
   LogOut,
   Menu,
   MessageCircle,
   Package,
+  Store,
   ShoppingCart,
   User,
   X,
@@ -38,8 +41,10 @@ export function Header({
   };
 
   const navClass = (page: string) =>
-    `text-sm font-medium transition ${
-      currentPage === page ? "text-blue-600" : "text-gray-700 hover:text-blue-600"
+    `text-sm font-medium transition inline-flex items-center gap-1.5 ${
+      currentPage === page
+        ? "text-blue-600"
+        : "text-gray-700 hover:text-blue-600"
     }`;
 
   return (
@@ -54,15 +59,29 @@ export function Header({
           </button>
 
           <nav className="hidden md:flex items-center space-x-8">
-            <button onClick={() => navigate("home")} className={navClass("home")}>
+            <button
+              onClick={() => navigate("home")}
+              className={navClass("home")}
+            >
+              <Home className="w-4 h-4" />
               Trang chủ
             </button>
             <button
               onClick={() => navigate("products")}
               className={navClass("products")}
             >
+              <Store className="w-4 h-4" />
               Sản phẩm
             </button>
+            {user && !profile?.is_admin && (
+              <button
+                onClick={() => navigate("favorites")}
+                className={navClass("favorites")}
+              >
+                <Heart className="w-4 h-4" />
+                Yêu thích
+              </button>
+            )}
             {profile?.is_admin && (
               <button
                 onClick={() => navigate("admin")}
@@ -80,25 +99,27 @@ export function Header({
                   onClick={() => navigate("orders")}
                   className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition"
                 >
-                  <Package className="w-5 h-5" />
+                  <Package className="w-4 h-4" />
                   <span>Đơn hàng</span>
                 </button>
 
                 {!profile?.is_admin && (
-                  <button
-                    onClick={() => navigate("chat")}
-                    className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition"
-                  >
-                    <MessageCircle className="w-5 h-5" />
-                    <span>Chat</span>
-                  </button>
+                  <>
+                    <button
+                      onClick={() => navigate("chat")}
+                      className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>Chat</span>
+                    </button>
+                  </>
                 )}
 
                 <button
                   onClick={onCartClick}
                   className="relative flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition"
                 >
-                  <ShoppingCart className="w-5 h-5" />
+                  <ShoppingCart className="w-4 h-4" />
                   {cartItemCount > 0 && (
                     <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                       {cartItemCount}
@@ -110,7 +131,7 @@ export function Header({
                   onClick={() => navigate("profile")}
                   className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition"
                 >
-                  <User className="w-5 h-5" />
+                  <User className="w-4 h-4" />
                   <span>{profile?.full_name || "Tài khoản"}</span>
                 </button>
 
@@ -118,7 +139,7 @@ export function Header({
                   onClick={signOut}
                   className="flex items-center space-x-1 text-gray-700 hover:text-red-600 transition"
                 >
-                  <LogOut className="w-5 h-5" />
+                  <LogOut className="w-4 h-4" />
                   <span>Đăng xuất</span>
                 </button>
               </>
@@ -145,7 +166,11 @@ export function Header({
             className="md:hidden text-gray-700 p-2"
             aria-label="Mở menu"
           >
-            {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
           </button>
         </div>
       </div>
@@ -153,13 +178,18 @@ export function Header({
       {mobileOpen && (
         <div className="md:hidden border-t border-slate-200 bg-white">
           <div className="container mx-auto px-4 py-4 space-y-3">
-            <button onClick={() => navigate("home")} className={navClass("home")}>
+            <button
+              onClick={() => navigate("home")}
+              className={navClass("home")}
+            >
+              <Home className="w-4 h-4" />
               Trang chủ
             </button>
             <button
               onClick={() => navigate("products")}
               className={`block ${navClass("products")}`}
             >
+              <Store className="w-4 h-4" />
               Sản phẩm
             </button>
             {profile?.is_admin && (
@@ -168,6 +198,15 @@ export function Header({
                 className={`block ${navClass("admin")}`}
               >
                 Quản trị
+              </button>
+            )}
+            {user && !profile?.is_admin && (
+              <button
+                onClick={() => navigate("favorites")}
+                className={`block ${navClass("favorites")}`}
+              >
+                <Heart className="w-4 h-4" />
+                Yêu thích
               </button>
             )}
 
@@ -181,12 +220,20 @@ export function Header({
                     Đơn hàng
                   </button>
                   {!profile?.is_admin && (
-                    <button
-                      onClick={() => navigate("chat")}
-                      className="text-left text-gray-700"
-                    >
-                      Chat
-                    </button>
+                    <>
+                      <button
+                        onClick={() => navigate("favorites")}
+                        className="text-left text-gray-700"
+                      >
+                        Yêu thích
+                      </button>
+                      <button
+                        onClick={() => navigate("chat")}
+                        className="text-left text-gray-700"
+                      >
+                        Chat
+                      </button>
+                    </>
                   )}
                   <button
                     onClick={() => {

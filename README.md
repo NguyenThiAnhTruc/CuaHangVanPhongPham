@@ -1,69 +1,169 @@
-# CuaHangVanPhongPham
+# Cửa Hàng Văn Phòng Phẩm - OfficeStore
 
-OfficeStore là website bán văn phòng phẩm xây dựng bằng Next.js App Router, TypeScript, Tailwind CSS và Supabase.
+OfficeStore là website bán văn phòng phẩm trực tuyến được xây dựng bằng **Next.js App Router**, **TypeScript**, **Tailwind CSS** và **Supabase**. Dự án hỗ trợ khách hàng xem sản phẩm, thêm vào giỏ hàng, đặt hàng, theo dõi đơn hàng, chat với admin, lưu sản phẩm yêu thích và đánh giá sản phẩm sau khi mua. Admin có thể quản lý sản phẩm, danh mục, đơn hàng, chat và xuất dữ liệu.
 
-## Công nghệ
+## Công Nghệ Sử Dụng
 
-- Frontend: Next.js App Router, React, TypeScript, Tailwind CSS
-- Backend: Supabase Auth, Database, Storage policy, Realtime
-- Container: Dockerfile, Docker Compose
+- **Frontend:** Next.js App Router, React, TypeScript
+- **UI:** Tailwind CSS, lucide-react
+- **Backend:** Supabase Auth, PostgreSQL Database, Storage, Realtime
+- **Bảo mật:** Supabase Row Level Security
+- **Container:** Dockerfile, Docker Compose
+- **Quản lý mã nguồn:** Git/GitHub
 
-## Chức năng chính
+## Chức Năng Chính
 
-- Xem danh mục và sản phẩm văn phòng phẩm
-- Đăng ký, đăng nhập email/password
-- Đăng nhập Google/Facebook qua Supabase OAuth
-- Giỏ hàng và đặt hàng
-- Trang cá nhân và lịch sử đơn hàng
-- Admin quản lý sản phẩm, đơn hàng
-- Admin quản lý danh mục sản phẩm
-- Admin upload ảnh sản phẩm bằng Supabase Storage
-- Dashboard admin thống kê doanh thu, trạng thái đơn hàng, tồn kho và chat
-- Admin xuất dữ liệu sản phẩm/đơn hàng dạng CSV mở được bằng Excel
-- Chat realtime giữa người mua và admin
+### Người Dùng
 
-## Tài khoản demo
+- Đăng ký, đăng nhập bằng email/password.
+- Đăng nhập bằng Google/Facebook qua Supabase OAuth.
+- Xem danh sách sản phẩm và lọc theo danh mục.
+- Tìm kiếm sản phẩm theo tên.
+- Xem chi tiết sản phẩm, tồn kho, giá bán và đánh giá.
+- Thêm sản phẩm vào giỏ hàng.
+- Tăng/giảm số lượng trong giỏ hàng.
+- Đặt hàng với thông tin giao hàng.
+- Chọn phương thức thanh toán:
+  - Thanh toán khi nhận hàng.
+  - Chuyển khoản ngân hàng.
+- Xem lịch sử đơn hàng.
+- Hủy đơn hàng khi đơn còn trạng thái chờ xác nhận.
+- Lưu sản phẩm yêu thích.
+- Đánh giá sản phẩm sau khi đơn hàng đã giao thành công.
+- Chat trực tiếp với admin.
+- Cập nhật hồ sơ cá nhân.
 
-Admin:
+### Admin
+
+- Dashboard thống kê sản phẩm, đơn hàng, doanh thu và tồn kho.
+- Quản lý sản phẩm:
+  - Thêm sản phẩm.
+  - Sửa sản phẩm.
+  - Xóa sản phẩm.
+  - Upload ảnh sản phẩm lên Supabase Storage.
+  - Ẩn/hiện sản phẩm.
+  - Xuất danh sách sản phẩm dạng CSV mở được bằng Excel.
+- Quản lý danh mục:
+  - Thêm danh mục.
+  - Sửa danh mục.
+  - Xóa danh mục.
+  - Tự tạo slug.
+- Quản lý đơn hàng:
+  - Xem đơn hàng.
+  - Xem chi tiết sản phẩm trong đơn.
+  - Cập nhật trạng thái đơn hàng.
+  - Xuất đơn hàng dạng CSV.
+- Quản lý chat:
+  - Xem danh sách hội thoại.
+  - Trả lời tin nhắn khách hàng.
+  - Theo dõi tin nhắn đã đọc/chưa đọc.
+
+## Tài Khoản Demo
+
+### Admin
 
 ```text
 Email: admin@gmail.com
 Password: 123456
 ```
 
-User:
+### User
 
 ```text
 Email: user1@gmail.com
 Password: 123456
 ```
 
-## Cài đặt
+## Cài Đặt Dự Án
+
+### 1. Clone source code
+
+```bash
+git clone https://github.com/NguyenThiAnhTruc/CuaHangVanPhongPham.git
+cd CuaHangVanPhongPham
+```
+
+### 2. Cài dependencies
 
 ```bash
 npm install
+```
+
+### 3. Tạo file môi trường
+
+Tạo file `.env` từ `.env.example`:
+
+```bash
 cp .env.example .env
+```
+
+Cấu hình:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+### 4. Chạy dự án
+
+```bash
 npm run dev
 ```
 
-Cập nhật `.env` bằng Supabase URL và anon key thật:
+Ứng dụng chạy mặc định tại:
 
 ```text
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+http://localhost:3000
 ```
 
-## Supabase
+## Cấu Hình Supabase
 
-Chạy các file SQL trong thư mục `supabase/migrations` theo thứ tự tên file.
+### 1. Chạy migrations
 
-Các phần chính:
+Vào Supabase SQL Editor và chạy các file trong thư mục:
 
-- Schema sản phẩm, danh mục, giỏ hàng, đơn hàng
-- RLS policy cho user/admin
-- Seed tài khoản demo
-- Storage buckets/policies
-- Chat customer-admin với realtime và RPC
+```text
+supabase/migrations
+```
+
+Chạy theo đúng thứ tự tên file từ nhỏ đến lớn, ví dụ:
+
+```text
+20251117135220_create_officestore_schema.sql
+20251117135221_seed_officestore_auth_users.sql
+...
+20251117135232_create_wishlist_and_reviews.sql
+```
+
+Các migration chính bao gồm:
+
+- Schema sản phẩm, danh mục, giỏ hàng, đơn hàng.
+- RLS policy cho user/admin.
+- Tài khoản demo admin/user.
+- Storage bucket cho ảnh sản phẩm, ảnh danh mục, avatar.
+- Chat giữa user và admin.
+- RPC tạo đơn hàng từ giỏ hàng.
+- RPC hủy đơn hàng đang chờ xác nhận.
+- Wishlist và đánh giá sản phẩm.
+
+### 2. Storage Buckets
+
+Dự án sử dụng các bucket:
+
+- `product-images`
+- `category-images`
+- `user-avatars`
+
+Admin có quyền upload ảnh sản phẩm và danh mục.
+
+### 3. OAuth Google/Facebook
+
+Nếu dùng đăng nhập Google/Facebook, cần cấu hình trong Supabase:
+
+- Authentication -> Providers -> Google/Facebook.
+- Điền Client ID và Client Secret.
+- Cấu hình redirect URL trong Google/Facebook Developer Console.
+- Khi deploy lên domain thật, cần thêm domain deploy vào redirect URLs.
 
 ## Docker
 
@@ -79,7 +179,7 @@ docker compose up --build
 http://localhost:3000
 ```
 
-## Kiểm tra
+## Kiểm Tra Dự Án
 
 ```bash
 npm run typecheck
@@ -87,8 +187,51 @@ npm run lint
 npm run build
 ```
 
-## Ghi chú nộp bài
+Ý nghĩa:
 
-- Không commit `.env`, `.next`, `node_modules`, `dist`
-- File `.env.example` chỉ chứa mẫu biến môi trường
-- Bằng chứng sử dụng AI nằm trong `AI_USAGE.md`
+- `typecheck`: kiểm tra TypeScript.
+- `lint`: kiểm tra quy tắc code.
+- `build`: build production bằng Next.js.
+
+## Cấu Trúc Thư Mục
+
+```text
+project
+├── src
+│   ├── app
+│   ├── components
+│   ├── contexts
+│   ├── hooks
+│   ├── lib
+│   └── views
+├── supabase
+│   └── migrations
+├── Dockerfile
+├── docker-compose.yml
+├── README.md
+├── FEATURES.md
+└── AI_USAGE.md
+```
+
+## Ghi Chú Khi Nộp Bài
+
+- Không commit `.env`.
+- Không commit `node_modules`.
+- Không commit `.next`.
+- File `.env.example` chỉ chứa biến mẫu.
+- `FEATURES.md` mô tả chi tiết chức năng dự án.
+- `AI_USAGE.md` là minh chứng sử dụng công cụ AI.
+- Cần chạy đầy đủ migrations trên Supabase trước khi demo.
+- Nếu deploy lên domain thật, cần cập nhật OAuth redirect URL và cấu hình SSL.
+
+## Trạng Thái Kiểm Tra Gần Nhất
+
+Dự án đã được kiểm tra bằng:
+
+```bash
+npm run typecheck
+npm run lint
+npm run build
+```
+
+Các lệnh trên đã chạy thành công trong quá trình hoàn thiện dự án.

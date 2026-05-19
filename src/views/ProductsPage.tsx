@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Search, ShoppingCart } from "lucide-react";
+import { Heart, Search, ShoppingCart, Star } from "lucide-react";
 import { Category, Product, supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -16,6 +16,8 @@ export function ProductsPage({
 }: ProductsPageProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [ratings, setRatings] = useState<Record<string, { avg: number; count: number }>>({});
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -30,6 +32,35 @@ export function ProductsPage({
     if (!error && data) {
       setCategories(data);
     }
+  }, []);
+
+  const fetchRatings = useCallback(async (productIds: string[]) => {
+    if (productIds.length === 0) {
+      setRatings({});
+      return;
+    }
+
+    const { data } = await supabase
+      .from("product_reviews")
+      .select("product_id,rating")
+      .in("product_id", productIds)
+      .eq("is_visible", true);
+
+    const nextRatings: Record<string, { avg: number; count: number }> = {};
+    (data ?? []).forEach((review) => {
+      const current = nextRatings[review.product_id] ?? { avg: 0, count: 0 };
+      nextRatings[review.product_id] = {
+        avg: current.avg + Number(review.rating),
+        count: current.count + 1,
+      };
+    });
+
+    Object.keys(nextRatings).forEach((productId) => {
+      const item = nextRatings[productId];
+      item.avg = item.count ? item.avg / item.count : 0;
+    });
+
+    setRatings(nextRatings);
   }, []);
 
   const fetchProducts = useCallback(async () => {
@@ -50,14 +81,57 @@ export function ProductsPage({
 
     if (!error && data) {
       setProducts(data);
+      void fetchRatings(data.map((product) => product.id));
     }
     setLoading(false);
-  }, [searchTerm, selectedCategory]);
+  }, [fetchRatings, searchTerm, selectedCategory]);
+
+  const fetchFavorites = useCallback(async () => {
+    if (!user) {
+      setFavoriteIds(new Set());
+      return;
+    }
+
+    const { data } = await supabase
+      .from("wishlist_items")
+      .select("product_id")
+      .eq("user_id", user.id);
+
+    setFavoriteIds(new Set((data ?? []).map((item) => item.product_id)));
+  }, [user]);
 
   useEffect(() => {
     fetchCategories();
     fetchProducts();
-  }, [fetchCategories, fetchProducts]);
+    fetchFavorites();
+  }, [fetchCategories, fetchFavorites, fetchProducts]);
+
+  const toggleFavorite = async (productId: string) => {
+    if (!user) return;
+
+    const isFavorite = favoriteIds.has(productId);
+    setFavoriteIds((current) => {
+      const next = new Set(current);
+      if (isFavorite) next.delete(productId);
+      else next.add(productId);
+      return next;
+    });
+
+    const { error } = isFavorite
+      ? await supabase
+          .from("wishlist_items")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("product_id", productId)
+      : await supabase.from("wishlist_items").insert({
+          user_id: user.id,
+          product_id: productId,
+        });
+
+    if (error) {
+      await fetchFavorites();
+    }
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -135,6 +209,8 @@ export function ProductsPage({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {products.map((product) => {
               const badge = stockBadge(product.stock);
+              const rating = ratings[product.id];
+              const isFavorite = favoriteIds.has(product.id);
 
               return (
                 <div
@@ -164,16 +240,38 @@ export function ProductsPage({
                       <p className="text-sm text-gray-500 mb-3 line-clamp-2 min-h-10">
                         {product.description}
                       </p>
+                      <div className="flex items-center gap-1 text-sm text-amber-600 mb-2">
+                        <Star className="w-4 h-4 fill-current" />
+                        <span>
+                          {rating?.count
+                            ? `${rating.avg.toFixed(1)} (${rating.count})`
+                            : "Chưa có đánh giá"}
+                        </span>
+                      </div>
                       <p className="text-xl font-bold text-blue-600">
                         {formatPrice(product.price)}
                       </p>
                     </div>
                   </button>
-                  <div className="px-4 pb-4">
+                  <div className="px-4 pb-4 flex gap-2">
+                    <button
+                      onClick={() => void toggleFavorite(product.id)}
+                      disabled={!user}
+                      className={`w-11 h-10 rounded-lg border flex items-center justify-center transition disabled:opacity-50 ${
+                        isFavorite
+                          ? "border-red-200 bg-red-50 text-red-600"
+                          : "border-gray-300 text-gray-500 hover:bg-slate-50"
+                      }`}
+                      title={isFavorite ? "Bỏ yêu thích" : "Thêm yêu thích"}
+                    >
+                      <Heart
+                        className={`w-5 h-5 ${isFavorite ? "fill-current" : ""}`}
+                      />
+                    </button>
                     <button
                       onClick={() => onAddToCart(product)}
                       disabled={product.stock === 0 || !user}
-                      className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center space-x-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center space-x-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
                       <ShoppingCart className="w-4 h-4" />
                       <span>

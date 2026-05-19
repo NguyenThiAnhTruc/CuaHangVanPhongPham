@@ -51,6 +51,26 @@ export interface Product {
   updated_at: string;
 }
 
+export interface WishlistItem {
+  id: string;
+  user_id: string;
+  product_id: string;
+  created_at: string;
+  product?: Product;
+}
+
+export interface ProductReview {
+  id: string;
+  user_id: string;
+  product_id: string;
+  rating: number;
+  comment: string;
+  is_visible: boolean;
+  created_at: string;
+  updated_at: string;
+  profile?: Pick<Profile, "full_name" | "email">;
+}
+
 export interface CartItem {
   id: string;
   user_id: string;

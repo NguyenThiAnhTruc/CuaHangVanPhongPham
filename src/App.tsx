@@ -17,6 +17,7 @@ import { CheckoutPage } from "./views/CheckoutPage";
 import { OrdersPage } from "./views/OrdersPage";
 import { ProfilePage } from "./views/ProfilePage";
 import { ChatPage } from "./views/ChatPage";
+import { FavoritesPage } from "./views/FavoritesPage";
 import { AdminPage } from "./views/admin/AdminPage";
 
 type Page =
@@ -27,6 +28,7 @@ type Page =
   | "orders"
   | "profile"
   | "chat"
+  | "favorites"
   | "admin";
 
 const validPages: Page[] = [
@@ -37,6 +39,7 @@ const validPages: Page[] = [
   "orders",
   "profile",
   "chat",
+  "favorites",
   "admin",
 ];
 
@@ -134,7 +137,15 @@ function AppContent() {
       setCurrentPage("admin");
       return;
     }
+    if (page === "favorites" && profile?.is_admin) {
+      setCurrentPage("admin");
+      return;
+    }
     if (page === "chat" && !user) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+    if (page === "favorites" && !user) {
       setIsLoginModalOpen(true);
       return;
     }
@@ -206,6 +217,13 @@ function AppContent() {
         {currentPage === "orders" && <OrdersPage />}
         {currentPage === "profile" && <ProfilePage />}
         {currentPage === "chat" && <ChatPage />}
+        {currentPage === "favorites" && (
+          <FavoritesPage
+            onNavigate={handleNavigate}
+            onViewProduct={setSelectedProduct}
+            onAddToCart={handleAddToCart}
+          />
+        )}
         {currentPage === "admin" && profile?.is_admin && <AdminPage />}
       </main>
 
