@@ -10,6 +10,10 @@ Chạy ứng dụng bằng Docker Compose ở máy local:
 docker compose up --build
 ```
 
+Trước khi chạy, cần có file `.env` ở thư mục dự án. Docker dùng các biến
+`NEXT_PUBLIC_SUPABASE_URL` và `NEXT_PUBLIC_SUPABASE_ANON_KEY` trong lúc build
+Next.js, nên nếu thiếu `.env` quá trình build sẽ lỗi.
+
 Ứng dụng chạy tại:
 
 ```text
