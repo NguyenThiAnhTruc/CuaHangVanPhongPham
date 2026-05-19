@@ -1,0 +1,31 @@
+services:
+  officestore:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: officestore-web
+    env_file:
+      - .env
+    expose:
+      - "3000"
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: officestore-proxy
+    depends_on:
+      - officestore
+    env_file:
+      - .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

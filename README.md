@@ -179,6 +179,18 @@ docker compose up --build
 http://localhost:3000
 ```
 
+Production deployment với VPS, domain và SSL được mô tả trong:
+
+```text
+DEPLOYMENT.md
+```
+
+Các file triển khai production:
+
+- `Dockerfile`
+- `docker-compose.prod.yml`
+- `Caddyfile`
+
 ## Kiểm Tra Dự Án
 
 ```bash
