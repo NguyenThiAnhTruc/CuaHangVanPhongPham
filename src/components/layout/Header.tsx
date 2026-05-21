@@ -53,9 +53,14 @@ export function Header({
         <div className="flex items-center justify-between h-16">
           <button
             onClick={() => navigate("home")}
-            className="text-2xl font-bold text-blue-600 hover:text-blue-700 transition"
+            className="flex items-center gap-3 text-left transition hover:opacity-90"
           >
-            OfficeStore
+            <img
+              src="/logo_vpp.jpg"
+              alt="Văn phòng phẩm Không Gian Sáng Tạo"
+              className="h-11 w-11 rounded-full object-cover ring-1 ring-slate-200"
+            />
+            <span className="text-2xl font-bold text-blue-600">OfficeStore</span>
           </button>
 
           <nav className="hidden md:flex items-center space-x-8">
@@ -131,7 +136,15 @@ export function Header({
                   onClick={() => navigate("profile")}
                   className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition"
                 >
-                  <User className="w-4 h-4" />
+                  {profile?.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt={profile.full_name || "Tài khoản"}
+                      className="h-7 w-7 rounded-full object-cover ring-1 ring-slate-200"
+                    />
+                  ) : (
+                    <User className="w-4 h-4" />
+                  )}
                   <span>{profile?.full_name || "Tài khoản"}</span>
                 </button>
 
@@ -246,8 +259,17 @@ export function Header({
                   </button>
                   <button
                     onClick={() => navigate("profile")}
-                    className="text-left text-gray-700"
+                    className="flex items-center gap-2 text-left text-gray-700"
                   >
+                    {profile?.avatar_url ? (
+                      <img
+                        src={profile.avatar_url}
+                        alt={profile.full_name || "Tài khoản"}
+                        className="h-7 w-7 rounded-full object-cover ring-1 ring-slate-200"
+                      />
+                    ) : (
+                      <User className="h-4 w-4" />
+                    )}
                     {profile?.full_name || "Tài khoản"}
                   </button>
                   <button

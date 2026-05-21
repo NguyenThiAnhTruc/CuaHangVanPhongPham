@@ -9,23 +9,23 @@ import { supabase, Order, OrderItem } from "../../lib/supabase";
 const statusMap: Record<string, { label: string; className: string }> = {
   pending: {
     label: "Chờ xác nhận",
-    className: "bg-yellow-100 text-yellow-800",
+    className: "bg-amber-50 text-amber-700 border-amber-200",
   },
   confirmed: {
     label: "Đã xác nhận",
-    className: "bg-blue-100 text-blue-800",
+    className: "bg-blue-50 text-blue-700 border-blue-200",
   },
   shipping: {
     label: "Đang giao hàng",
-    className: "bg-purple-100 text-purple-800",
+    className: "bg-violet-50 text-violet-700 border-violet-200",
   },
   delivered: {
     label: "Đã giao hàng",
-    className: "bg-green-100 text-green-800",
+    className: "bg-emerald-50 text-emerald-700 border-emerald-200",
   },
   cancelled: {
     label: "Đã hủy",
-    className: "bg-red-100 text-red-800",
+    className: "bg-red-50 text-red-700 border-red-200",
   },
 };
 
@@ -177,7 +177,7 @@ export function AdminOrdersPage() {
     const statusInfo = statusMap[status] || statusMap.pending;
     return (
       <span
-        className={`px-3 py-1 rounded-full text-sm font-medium ${statusInfo.className}`}
+        className={`inline-flex items-center rounded-full border px-3 py-1 text-sm font-semibold ${statusInfo.className}`}
       >
         {statusInfo.label}
       </span>

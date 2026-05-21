@@ -102,6 +102,10 @@
 - Cập nhật họ tên.
 - Cập nhật số điện thoại.
 - Cập nhật địa chỉ mặc định.
+- Upload ảnh đại diện cho user và admin.
+- Ảnh đại diện được crop vuông, nén trước khi upload để giảm dung lượng.
+- Ảnh đại diện được lưu trong Supabase Storage bucket `user-avatars`.
+- Header hiển thị ảnh đại diện sau khi người dùng cập nhật hồ sơ.
 - Thông tin profile được dùng mặc định ở trang thanh toán.
 
 ### 3.9. Chat Với Admin
@@ -138,6 +142,7 @@
   - Ảnh sản phẩm.
   - Trạng thái hiển thị.
 - Upload ảnh sản phẩm lên Supabase Storage.
+- Ảnh sản phẩm được tối ưu kích thước trước khi upload để giảm lỗi timeout.
 - Lưu URL ảnh công khai vào bảng `products`.
 - Xuất danh sách sản phẩm dạng CSV mở được bằng Excel.
 - Dùng hộp thoại trong ứng dụng để báo lỗi/thành công, không dùng hộp thoại mặc định của trình duyệt.
@@ -229,6 +234,7 @@ Các bảng chính:
 - Bucket `category-images` cho ảnh danh mục.
 - Bucket `user-avatars` cho ảnh đại diện.
 - Policy upload ảnh sản phẩm/danh mục chỉ dành cho admin.
+- Policy avatar cho phép user/admin upload và quản lý ảnh trong thư mục của chính tài khoản đó.
 
 ### 5.6. Realtime
 

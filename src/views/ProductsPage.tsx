@@ -141,9 +141,22 @@ export function ProductsPage({
   };
 
   const stockBadge = (stock: number) => {
-    if (stock === 0) return { label: "Hết hàng", className: "bg-red-500" };
-    if (stock < 10) return { label: `Còn ${stock}`, className: "bg-orange-500" };
-    return { label: "Còn hàng", className: "bg-green-600" };
+    if (stock === 0) {
+      return {
+        label: "Hết hàng",
+        className: "bg-red-50 text-red-700 border-red-200",
+      };
+    }
+    if (stock < 10) {
+      return {
+        label: `Còn ${stock}`,
+        className: "bg-amber-50 text-amber-700 border-amber-200",
+      };
+    }
+    return {
+      label: "Còn hàng",
+      className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    };
   };
 
   return (
@@ -156,7 +169,7 @@ export function ProductsPage({
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6 mb-8">
           <div className="mb-6">
             <div className="relative">
               <input
@@ -215,20 +228,26 @@ export function ProductsPage({
               return (
                 <div
                   key={product.id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition group flex flex-col"
+                  className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden hover:-translate-y-0.5 hover:shadow-lg transition group flex flex-col"
                 >
                   <button
                     onClick={() => onViewProduct(product)}
                     className="text-left flex-1"
                   >
-                    <div className="relative h-48 overflow-hidden bg-slate-100">
-                      <img
-                        src={product.image_url}
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition"
-                      />
+                    <div className="relative aspect-square overflow-hidden bg-slate-100">
+                      {product.image_url ? (
+                        <img
+                          src={product.image_url}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-sm text-slate-400">
+                          Chưa có ảnh
+                        </div>
+                      )}
                       <span
-                        className={`absolute top-2 right-2 text-white px-2 py-1 rounded text-xs ${badge.className}`}
+                        className={`absolute top-3 right-3 border px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm ${badge.className}`}
                       >
                         {badge.label}
                       </span>
@@ -240,7 +259,7 @@ export function ProductsPage({
                       <p className="text-sm text-gray-500 mb-3 line-clamp-2 min-h-10">
                         {product.description}
                       </p>
-                      <div className="flex items-center gap-1 text-sm text-amber-600 mb-2">
+                      <div className="flex items-center gap-1 text-sm text-amber-600 mb-3">
                         <Star className="w-4 h-4 fill-current" />
                         <span>
                           {rating?.count
@@ -248,7 +267,7 @@ export function ProductsPage({
                             : "Chưa có đánh giá"}
                         </span>
                       </div>
-                      <p className="text-xl font-bold text-blue-600">
+                      <p className="text-xl font-bold text-blue-600 tracking-tight">
                         {formatPrice(product.price)}
                       </p>
                     </div>

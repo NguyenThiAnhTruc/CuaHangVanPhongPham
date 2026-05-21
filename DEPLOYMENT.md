@@ -2,6 +2,12 @@
 
 Tài liệu này dùng cho tiêu chí **Dockerfile + Docker Compose** và **VPS Deployment với Domain + SSL (HTTPS)**.
 
+Ngoài phương án VPS, dự án cũng có thể deploy demo bằng **Vercel** vì đây là ứng dụng Next.js. Khi báo cáo, có thể trình bày:
+
+- Docker/Docker Compose: dùng để chứng minh ứng dụng đã được container hóa.
+- Vercel: dùng để có URL demo thực tế nhanh, ổn định và dễ trình bày.
+- VPS + Caddy: là phương án production tự quản lý server, có domain và SSL.
+
 ## 1. Docker Local
 
 Chạy ứng dụng bằng Docker Compose ở máy local:
@@ -152,7 +158,50 @@ https://<your-supabase-project>.supabase.co/auth/v1/callback
 
 Nếu frontend dùng domain mới, nhớ thêm domain vào phần allowed origins/authorized domains.
 
-## 8. Cập Nhật Source Trên VPS
+## 8. Deploy Demo Bằng Vercel Và Subdomain
+
+Nếu dùng Vercel để demo, thực hiện:
+
+1. Import GitHub repository vào Vercel.
+2. Thêm Environment Variables:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+3. Vào Vercel `Settings -> Domains`, thêm domain:
+
+```text
+officestore.truc0209.id.vn
+```
+
+4. Trong DNS VinaHost của `truc0209.id.vn`, thêm record:
+
+```text
+Type: CNAME
+Name: officestore
+Value: cname.vercel-dns.com
+```
+
+5. Trong Supabase `Authentication -> URL Configuration`, thêm:
+
+```text
+Site URL:
+https://officestore.truc0209.id.vn
+
+Redirect URLs:
+https://officestore.truc0209.id.vn/**
+http://localhost:3000/**
+```
+
+Nếu vẫn giữ URL Vercel mặc định để test, thêm cả:
+
+```text
+https://your-vercel-domain.vercel.app/**
+```
+
+## 9. Cập Nhật Source Trên VPS
 
 Khi có code mới:
 
@@ -161,7 +210,7 @@ git pull origin main
 docker compose -f docker-compose.prod.yml up --build -d
 ```
 
-## 9. Dừng Ứng Dụng
+## 10. Dừng Ứng Dụng
 
 ```bash
 docker compose -f docker-compose.prod.yml down
@@ -173,7 +222,7 @@ Nếu muốn xóa cả volume SSL của Caddy:
 docker compose -f docker-compose.prod.yml down -v
 ```
 
-## 10. Ghi Chú Khi Nộp Bài
+## 11. Ghi Chú Khi Nộp Bài
 
 - `Dockerfile` đã dùng multi-stage build.
 - `docker-compose.yml` dùng để chạy local.
@@ -183,3 +232,4 @@ docker compose -f docker-compose.prod.yml down -v
   - Domain HTTPS đang chạy.
   - Docker containers đang running.
   - Supabase project đang kết nối.
+  - Vercel deployment nếu dùng Vercel để demo thực tế.

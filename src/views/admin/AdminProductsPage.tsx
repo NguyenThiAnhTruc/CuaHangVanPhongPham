@@ -59,6 +59,11 @@ type AdminRestOptions = {
   timeoutMs?: number;
 };
 
+const MAX_PRODUCT_IMAGE_INPUT_BYTES = 8 * 1024 * 1024;
+const MAX_PRODUCT_IMAGE_UPLOAD_BYTES = 3 * 1024 * 1024;
+const PRODUCT_IMAGE_UPLOAD_TIMEOUT_MS = 120000;
+const PRODUCT_IMAGE_BUCKET = "product-images";
+
 const emptyForm: ProductFormData = {
   category_id: "",
   name: "",
@@ -121,6 +126,34 @@ async function parseRestError(response: Response) {
   }
 }
 
+async function fileToOptimizedImage(file: File) {
+  if (file.size <= 900 * 1024 && file.type !== "image/png") return file;
+
+  const image = await createImageBitmap(file);
+  const maxSize = 900;
+  const ratio = Math.min(1, maxSize / Math.max(image.width, image.height));
+  const width = Math.max(1, Math.round(image.width * ratio));
+  const height = Math.max(1, Math.round(image.height * ratio));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext("2d");
+  if (!context) return file;
+
+  context.drawImage(image, 0, 0, width, height);
+  image.close();
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, "image/jpeg", 0.78);
+  });
+
+  if (!blob) return file;
+  return new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
+    type: "image/jpeg",
+  });
+}
+
 async function requestAdminRest<T>(
   endpoint: string,
   { method = "GET", body, timeoutMs = 30000 }: AdminRestOptions = {},
@@ -155,6 +188,45 @@ async function requestAdminRest<T>(
   } catch (error) {
     if ((error as Error).name === "AbortError") {
       throw new Error("Supabase phản hồi quá lâu. Vui lòng kiểm tra mạng rồi thử lại.");
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function uploadProductImage(file: File, storagePath: string) {
+  const accessToken = await getAdminAccessToken();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    PRODUCT_IMAGE_UPLOAD_TIMEOUT_MS,
+  );
+
+  try {
+    const response = await fetch(
+      `${supabaseProjectUrl}/storage/v1/object/${PRODUCT_IMAGE_BUCKET}/${storagePath}`,
+      {
+        method: "POST",
+        headers: {
+          apikey: supabasePublicAnonKey,
+          Authorization: `Bearer ${accessToken}`,
+          "Cache-Control": "3600",
+          "Content-Type": file.type || "image/jpeg",
+          "x-upsert": "false",
+        },
+        body: file,
+        signal: controller.signal,
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(await parseRestError(response));
+    }
+  } catch (error) {
+    if ((error as Error).name === "AbortError") {
+      throw new Error("Upload ảnh quá lâu. Vui lòng kiểm tra mạng rồi thử lại.");
     }
 
     throw error;
@@ -291,8 +363,8 @@ export function AdminProductsPage() {
       return;
     }
 
-    if (file.size > 3 * 1024 * 1024) {
-      const message = "Ảnh không được vượt quá 3MB.";
+    if (file.size > MAX_PRODUCT_IMAGE_INPUT_BYTES) {
+      const message = "Ảnh không được vượt quá 8MB.";
       setFormError(message);
       showDialog("error", "Ảnh quá lớn", message);
       return;
@@ -302,27 +374,22 @@ export function AdminProductsPage() {
     setFormError("");
 
     try {
-      const extension = file.name.split(".").pop() || "jpg";
-      const safeName = `${Date.now()}-${crypto.randomUUID()}.${extension}`;
-      const storagePath = `products/${safeName}`;
-
-      const { error } = await withTimeout(
-        supabase.storage.from("product-images").upload(storagePath, file, {
-          cacheControl: "3600",
-          upsert: false,
-        }),
-        45000,
-      );
-
-      if (error) {
-        const message = getErrorMessage(error, "Không thể upload ảnh sản phẩm.");
+      const optimizedFile = await fileToOptimizedImage(file);
+      if (optimizedFile.size > MAX_PRODUCT_IMAGE_UPLOAD_BYTES) {
+        const message = "Ảnh sau khi tối ưu vẫn vượt quá 3MB. Vui lòng chọn ảnh nhỏ hơn.";
         setFormError(message);
-        showDialog("error", "Upload ảnh thất bại", message);
+        showDialog("error", "Ảnh quá lớn", message);
         return;
       }
 
+      const extension = optimizedFile.type === "image/webp" ? "webp" : "jpg";
+      const safeName = `${Date.now()}-${crypto.randomUUID()}.${extension}`;
+      const storagePath = `products/${safeName}`;
+
+      await uploadProductImage(optimizedFile, storagePath);
+
       const { data } = supabase.storage
-        .from("product-images")
+        .from(PRODUCT_IMAGE_BUCKET)
         .getPublicUrl(storagePath);
 
       setFormData((current) => ({

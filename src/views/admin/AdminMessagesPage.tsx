@@ -75,6 +75,7 @@ export function AdminMessagesPage() {
       full_name: row.customer_full_name || "",
       phone: row.customer_phone || "",
       address: "",
+      avatar_url: "",
       is_admin: false,
       created_at: row.created_at,
       updated_at: row.updated_at,

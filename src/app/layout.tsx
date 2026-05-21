@@ -4,6 +4,11 @@ import "./globals.css";
 export const metadata = {
   title: "OfficeStore",
   description: "Office supplies e-commerce platform",
+  icons: {
+    icon: "/logo_vpp.jpg",
+    shortcut: "/logo_vpp.jpg",
+    apple: "/logo_vpp.jpg",
+  },
 };
 
 interface RootLayoutProps {

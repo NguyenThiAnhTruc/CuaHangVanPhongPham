@@ -46,6 +46,7 @@ Trong quá trình xây dựng dự án **Cửa Hàng Văn Phòng Phẩm - Office
 - Hoàn thiện luồng xem sản phẩm, giỏ hàng và đặt hàng.
 - Thêm chức năng sản phẩm yêu thích cho người dùng.
 - Thêm chức năng đánh giá sản phẩm, chỉ cho phép đánh giá khi đã mua và nhận hàng.
+- Thêm chức năng ảnh đại diện cho user/admin, bao gồm crop ảnh, nén ảnh và lưu URL vào `profiles.avatar_url`.
 - Cải thiện trang thanh toán:
   - Kiểm tra họ tên, số điện thoại, địa chỉ.
   - Chọn phương thức thanh toán.
@@ -59,6 +60,7 @@ Trong quá trình xây dựng dự án **Cửa Hàng Văn Phòng Phẩm - Office
 - Hoàn thiện quản lý sản phẩm:
   - Thêm, sửa, xóa sản phẩm.
   - Upload ảnh sản phẩm lên Supabase Storage.
+  - Tối ưu ảnh sản phẩm trước khi upload để giảm dung lượng và hạn chế lỗi timeout.
   - Xuất danh sách sản phẩm dạng CSV mở được bằng Excel.
   - Thay thông báo mặc định của trình duyệt bằng hộp thoại trong ứng dụng.
 - Hoàn thiện quản lý danh mục:
@@ -84,8 +86,10 @@ Trong quá trình xây dựng dự án **Cửa Hàng Văn Phòng Phẩm - Office
 
 - Tạo `Dockerfile`.
 - Tạo `docker-compose.yml`.
+- Tạo `docker-compose.prod.yml` và `Caddyfile` cho phương án VPS + domain + SSL.
 - Viết `.env.example`.
-- Viết `README.md`, `FEATURES.md`, `AI_USAGE.md`.
+- Viết `README.md`, `FEATURES.md`, `AI_USAGE.md`, `DEPLOYMENT.md`.
+- Hướng dẫn triển khai demo bằng Vercel và subdomain `officestore.truc0209.id.vn`.
 - Kiểm tra các lệnh:
   - `npm run typecheck`
   - `npm run lint`
@@ -103,6 +107,8 @@ Trong quá trình xây dựng dự án **Cửa Hàng Văn Phòng Phẩm - Office
 8. "Thông báo bằng hộp thoại không thông báo bằng localhost."
 9. "Bạn hãy xem giúp tôi phần thanh toán."
 10. "Dựa vào dự án hãy viết lại AI_USAGE.md và FEATURES.md."
+11. "Có thể thêm hình ảnh đại diện vào thông tin cá nhân của user và admin không."
+12. "Tạo subdomain trên VinaHost cho bài này như nào."
 
 ## 5. Kết Quả Sau Khi Sử Dụng AI
 
@@ -110,6 +116,8 @@ Trong quá trình xây dựng dự án **Cửa Hàng Văn Phòng Phẩm - Office
 - Supabase có schema, RLS, Storage, Auth, OAuth, Realtime và RPC.
 - Giao diện người dùng và admin được cải thiện rõ ràng hơn.
 - Các lỗi đăng nhập, RLS, timeout, upload ảnh và chat được phân tích và sửa.
+- Hồ sơ cá nhân có ảnh đại diện cho cả user và admin.
+- Dự án có tài liệu triển khai Docker/VPS và phương án demo bằng Vercel với domain riêng.
 - Dự án có thể kiểm tra bằng TypeScript, ESLint và build production.
 
 ## 6. Cam Kết Kiểm Tra Lại
