@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   ReactNode,
 } from "react";
@@ -73,6 +74,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
 
   const [loading, setLoading] = useState(true);
+  const lastProfileFetchUserId = useRef<string | null>(null);
+  const loadedProfileUserId = useRef<string | null>(null);
 
   const clearAuthCallbackUrl = () => {
     if (typeof window === "undefined") return;
@@ -100,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await withTimeout(
         supabase.from("profiles").select("*").eq("id", userId).single(),
-        12000,
+        30000,
         "fetch_profile",
       );
 
@@ -111,8 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setProfile(data);
+      loadedProfileUserId.current = userId;
     } catch (err) {
-      console.error("Unexpected profile error:", err);
+      console.warn("Unexpected profile error:", err);
     }
   };
 
@@ -137,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: { session },
         } = await withTimeout(
           supabase.auth.getSession(),
-          10000,
+          30000,
           "get_session",
         );
 
@@ -146,10 +150,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
+          lastProfileFetchUserId.current = session.user.id;
           await fetchProfile(session.user.id);
         }
       } catch (err) {
-        console.error("Get session error:", err);
+        console.warn("Get session error:", err);
       } finally {
         clearAuthCallbackUrl();
         setLoading(false);
@@ -170,8 +175,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
 
       if (session?.user) {
+        if (loadedProfileUserId.current === session.user.id) {
+          setLoading(false);
+          return;
+        }
+        lastProfileFetchUserId.current = session.user.id;
         await fetchProfile(session.user.id);
       } else {
+        lastProfileFetchUserId.current = null;
+        loadedProfileUserId.current = null;
         setProfile(null);
       }
 
