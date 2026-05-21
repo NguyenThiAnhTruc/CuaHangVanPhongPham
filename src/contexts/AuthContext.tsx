@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const [session, setSession] = useState<Session | null>(null);
 
-  const [loading, setLoading] = useState(true);
+  const loading = false;
   const lastProfileFetchUserId = useRef<string | null>(null);
   const loadedProfileUserId = useRef<string | null>(null);
 
@@ -100,10 +100,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // =========================
 
   const fetchProfile = async (userId: string) => {
+    if (
+      loadedProfileUserId.current === userId ||
+      lastProfileFetchUserId.current === userId
+    ) {
+      return;
+    }
+
+    lastProfileFetchUserId.current = userId;
+
     try {
       const { data, error } = await withTimeout(
         supabase.from("profiles").select("*").eq("id", userId).single(),
-        30000,
+        15000,
         "fetch_profile",
       );
 
@@ -116,7 +125,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(data);
       loadedProfileUserId.current = userId;
     } catch (err) {
-      console.warn("Unexpected profile error:", err);
+      if (!(err instanceof Error && err.message === "fetch_profile_timeout")) {
+        console.warn("Unexpected profile error:", err);
+      }
+    } finally {
+      if (lastProfileFetchUserId.current === userId) {
+        lastProfileFetchUserId.current = null;
+      }
     }
   };
 
@@ -135,33 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // =========================
 
   useEffect(() => {
-    const getInitialSession = async () => {
-      try {
-        const {
-          data: { session },
-        } = await withTimeout(
-          supabase.auth.getSession(),
-          30000,
-          "get_session",
-        );
-
-        setSession(session);
-
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          lastProfileFetchUserId.current = session.user.id;
-          await fetchProfile(session.user.id);
-        }
-      } catch (err) {
-        console.warn("Get session error:", err);
-      } finally {
-        clearAuthCallbackUrl();
-        setLoading(false);
-      }
-    };
-
-    getInitialSession();
+    clearAuthCallbackUrl();
 
     // =========================
     // AUTH LISTENER
@@ -169,25 +158,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
 
       setUser(session?.user ?? null);
 
       if (session?.user) {
         if (loadedProfileUserId.current === session.user.id) {
-          setLoading(false);
           return;
         }
-        lastProfileFetchUserId.current = session.user.id;
-        await fetchProfile(session.user.id);
+        void fetchProfile(session.user.id);
       } else {
         lastProfileFetchUserId.current = null;
         loadedProfileUserId.current = null;
         setProfile(null);
       }
-
-      setLoading(false);
     });
 
     return () => {
