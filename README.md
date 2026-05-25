@@ -229,19 +229,6 @@ project
 ├── FEATURES.md
 └── AI_USAGE.md
 ```
-
-## Ghi Chú Khi Nộp Bài
-
-- Không commit `.env`.
-- Không commit `node_modules`.
-- Không commit `.next`.
-- File `.env.example` chỉ chứa biến mẫu.
-- `FEATURES.md` mô tả chi tiết chức năng dự án.
-- `AI_USAGE.md` là minh chứng sử dụng công cụ AI.
-- `DEPLOYMENT.md` là hướng dẫn Docker, VPS, SSL và Vercel/subdomain.
-- Cần chạy đầy đủ migrations trên Supabase trước khi demo.
-- Nếu deploy lên domain thật, cần cập nhật OAuth redirect URL và cấu hình SSL.
-
 ## Trạng Thái Kiểm Tra Gần Nhất
 
 Dự án đã được kiểm tra bằng:
@@ -251,5 +238,3 @@ npm run typecheck
 npm run lint
 npm run build
 ```
-
-Các lệnh trên đã chạy thành công trong quá trình hoàn thiện dự án.
