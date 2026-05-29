@@ -23,3 +23,7 @@ dist-ssr
 *.sw?
 .env
 tsconfig.tsbuildinfo
+
+# Keep only the main README in Git.
+*.md
+!README.md
