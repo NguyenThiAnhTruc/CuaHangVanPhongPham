@@ -68,7 +68,7 @@ Phia admin co cac chuc nang quan ly san pham, danh muc, don hang, tin nhan khach
 
 ```text
 Email: admin@gmail.com
-Password: 123456
+Password: ******
 ```
 
 ### User
@@ -111,8 +111,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 ### 4. Cau hinh Supabase
 
 Du an su dung Supabase cho Auth, Database, Storage va Realtime. Database Supabase can duoc tao bang cac SQL script rieng cua du an.
-
-Luu y: cac script tao bang, RLS, RPC, Storage policy va du lieu mau khong duoc dua truc tiep len GitHub. Khi nop bai, cac script nay duoc nen rieng thanh file zip theo yeu cau.
 
 ### 5. Chay du an local
 
@@ -185,11 +183,3 @@ project
 └── tsconfig.json
 ```
 
-## Ghi Chu
-
-- Khong commit file `.env`.
-- Khong commit `node_modules`.
-- Khong commit `.next`, `dist` hoac file build/cache.
-- Khong commit script Supabase neu da nop rieng bang file zip.
-- Can cau hinh bien moi truong tren Vercel neu deploy len Vercel.
-- Can cap nhat Supabase Authentication URL va Redirect URLs theo domain deploy.
