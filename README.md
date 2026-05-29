@@ -1,67 +1,68 @@
-# Cửa Hàng Văn Phòng Phẩm - OfficeStore
+# OfficeStore - Cua Hang Van Phong Pham
 
-OfficeStore là website bán văn phòng phẩm trực tuyến được xây dựng bằng **Next.js App Router**, **TypeScript**, **Tailwind CSS** và **Supabase**. Dự án hỗ trợ khách hàng xem sản phẩm, thêm vào giỏ hàng, đặt hàng, theo dõi đơn hàng, chat với admin, lưu sản phẩm yêu thích và đánh giá sản phẩm sau khi mua. Admin có thể quản lý sản phẩm, danh mục, đơn hàng, chat và xuất dữ liệu.
+OfficeStore la website ban van phong pham truc tuyen duoc xay dung bang **Next.js App Router**, **React**, **TypeScript**, **Tailwind CSS** va **Supabase**.
 
-Dự án cũng hỗ trợ upload ảnh sản phẩm, ảnh đại diện user/admin, đăng nhập Google/Facebook, Docker Compose và triển khai demo bằng Vercel hoặc VPS.
+He thong ho tro khach hang xem san pham, tim kiem, loc theo danh muc, them vao gio hang, dat hang, theo doi don hang, huy don khi con cho xac nhan, luu san pham yeu thich, danh gia san pham sau khi mua va chat voi admin.
 
-## Công Nghệ Sử Dụng
+Phia admin co cac chuc nang quan ly san pham, danh muc, don hang, tin nhan khach hang, dashboard thong ke va xuat du lieu CSV.
+
+## Cong Nghe Su Dung
 
 - **Frontend:** Next.js App Router, React, TypeScript
 - **UI:** Tailwind CSS, lucide-react
 - **Backend:** Supabase Auth, PostgreSQL Database, Storage, Realtime
-- **Bảo mật:** Supabase Row Level Security
+- **Bao mat:** Supabase Row Level Security
 - **Container:** Dockerfile, Docker Compose
-- **Quản lý mã nguồn:** Git/GitHub
+- **Quan ly ma nguon:** Git/GitHub
 
-## Chức Năng Chính
+## Chuc Nang Chinh
 
-### Người Dùng
+### Khach Hang
 
-- Đăng ký, đăng nhập bằng email/password.
-- Đăng nhập bằng Google/Facebook qua Supabase OAuth.
-- Xem danh sách sản phẩm và lọc theo danh mục.
-- Tìm kiếm sản phẩm theo tên.
-- Xem chi tiết sản phẩm, tồn kho, giá bán và đánh giá.
-- Thêm sản phẩm vào giỏ hàng.
-- Tăng/giảm số lượng trong giỏ hàng.
-- Đặt hàng với thông tin giao hàng.
-- Chọn phương thức thanh toán:
-  - Thanh toán khi nhận hàng.
-  - Chuyển khoản ngân hàng.
-- Xem lịch sử đơn hàng.
-- Hủy đơn hàng khi đơn còn trạng thái chờ xác nhận.
-- Lưu sản phẩm yêu thích.
-- Đánh giá sản phẩm sau khi đơn hàng đã giao thành công.
-- Chat trực tiếp với admin.
-- Cập nhật hồ sơ cá nhân và ảnh đại diện.
+- Dang ky, dang nhap bang email/password.
+- Dang nhap bang Google/Facebook thong qua Supabase OAuth.
+- Xem danh sach san pham va loc theo danh muc.
+- Tim kiem san pham theo ten.
+- Xem chi tiet san pham, gia ban, ton kho va danh gia.
+- Them san pham vao gio hang.
+- Tang/giam so luong san pham trong gio hang.
+- Dat hang voi thong tin giao hang.
+- Chon phuong thuc thanh toan:
+  - Thanh toan khi nhan hang.
+  - Chuyen khoan ngan hang.
+- Xem lich su don hang.
+- Huy don hang khi don con trang thai cho xac nhan.
+- Luu san pham yeu thich.
+- Danh gia san pham sau khi don hang da giao thanh cong.
+- Chat truc tiep voi admin.
+- Cap nhat ho so ca nhan va anh dai dien.
 
 ### Admin
 
-- Dashboard thống kê sản phẩm, đơn hàng, doanh thu và tồn kho.
-- Quản lý sản phẩm:
-  - Thêm sản phẩm.
-  - Sửa sản phẩm.
-  - Xóa sản phẩm.
-  - Upload ảnh sản phẩm lên Supabase Storage.
-  - Tối ưu ảnh trước khi upload để giảm dung lượng.
-  - Ẩn/hiện sản phẩm.
-  - Xuất danh sách sản phẩm dạng CSV mở được bằng Excel.
-- Quản lý danh mục:
-  - Thêm danh mục.
-  - Sửa danh mục.
-  - Xóa danh mục.
-  - Tự tạo slug.
-- Quản lý đơn hàng:
-  - Xem đơn hàng.
-  - Xem chi tiết sản phẩm trong đơn.
-  - Cập nhật trạng thái đơn hàng.
-  - Xuất đơn hàng dạng CSV.
-- Quản lý chat:
-  - Xem danh sách hội thoại.
-  - Trả lời tin nhắn khách hàng.
-  - Theo dõi tin nhắn đã đọc/chưa đọc.
+- Xem dashboard thong ke san pham, don hang, doanh thu va ton kho.
+- Quan ly san pham:
+  - Them san pham.
+  - Sua san pham.
+  - Xoa san pham.
+  - An/hien san pham.
+  - Upload anh san pham len Supabase Storage.
+  - Xuat danh sach san pham dang CSV.
+- Quan ly danh muc:
+  - Them danh muc.
+  - Sua danh muc.
+  - Xoa danh muc.
+  - Tu tao slug.
+- Quan ly don hang:
+  - Xem danh sach don hang.
+  - Xem chi tiet san pham trong don.
+  - Cap nhat trang thai don hang.
+  - Xuat don hang dang CSV.
+- Quan ly chat:
+  - Xem danh sach hoi thoai.
+  - Tra loi tin nhan khach hang.
+  - Theo doi tin nhan da doc/chua doc.
 
-## Tài Khoản Demo
+## Tai Khoan Demo
 
 ### Admin
 
@@ -77,7 +78,7 @@ Email: user1@gmail.com
 Password: 123456
 ```
 
-## Cài Đặt Dự Án
+## Cai Dat Du An
 
 ### 1. Clone source code
 
@@ -86,117 +87,68 @@ git clone https://github.com/NguyenThiAnhTruc/CuaHangVanPhongPham.git
 cd CuaHangVanPhongPham
 ```
 
-### 2. Cài dependencies
+### 2. Cai dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Tạo file môi trường
+### 3. Tao file moi truong
 
-Tạo file `.env` từ `.env.example`:
+Tao file `.env` tu `.env.example`:
 
 ```bash
 cp .env.example .env
 ```
 
-Cấu hình:
+Cau hinh cac bien moi truong:
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
-### 4. Chạy dự án
+### 4. Cau hinh Supabase
+
+Du an su dung Supabase cho Auth, Database, Storage va Realtime. Database Supabase can duoc tao bang cac SQL script rieng cua du an.
+
+Luu y: cac script tao bang, RLS, RPC, Storage policy va du lieu mau khong duoc dua truc tiep len GitHub. Khi nop bai, cac script nay duoc nen rieng thanh file zip theo yeu cau.
+
+### 5. Chay du an local
 
 ```bash
 npm run dev
 ```
 
-Ứng dụng chạy mặc định tại:
+Ung dung chay mac dinh tai:
 
 ```text
 http://localhost:3000
 ```
 
-## Cấu Hình Supabase
-
-### 1. Chạy migrations
-
-Vào Supabase SQL Editor và chạy các file trong thư mục:
-
-```text
-supabase/migrations
-```
-
-Chạy theo đúng thứ tự tên file từ nhỏ đến lớn, ví dụ:
-
-```text
-20251117135220_create_officestore_schema.sql
-20251117135221_seed_officestore_auth_users.sql
-...
-20251117135232_create_wishlist_and_reviews.sql
-```
-
-Các migration chính bao gồm:
-
-- Schema sản phẩm, danh mục, giỏ hàng, đơn hàng.
-- RLS policy cho user/admin.
-- Tài khoản demo admin/user.
-- Storage bucket cho ảnh sản phẩm, ảnh danh mục, avatar.
-- Chat giữa user và admin.
-- RPC tạo đơn hàng từ giỏ hàng.
-- RPC hủy đơn hàng đang chờ xác nhận.
-- Wishlist và đánh giá sản phẩm.
-- Avatar user/admin và policy Storage cho bucket `user-avatars`.
-
-### 2. Storage Buckets
-
-Dự án sử dụng các bucket:
-
-- `product-images`
-- `category-images`
-- `user-avatars`
-
-Admin có quyền upload ảnh sản phẩm và danh mục.
-User và admin có thể upload ảnh đại diện của chính mình vào `user-avatars`.
-
-### 3. OAuth Google/Facebook
-
-Nếu dùng đăng nhập Google/Facebook, cần cấu hình trong Supabase:
-
-- Authentication -> Providers -> Google/Facebook.
-- Điền Client ID và Client Secret.
-- Cấu hình redirect URL trong Google/Facebook Developer Console.
-- Khi deploy lên domain thật, cần thêm domain deploy vào redirect URLs.
-
 ## Docker
 
-Chạy bằng Docker Compose:
+Chay bang Docker Compose:
 
 ```bash
 docker compose up --build
 ```
 
-Ứng dụng chạy tại:
+Ung dung chay tai:
 
 ```text
 http://localhost:3000
 ```
 
-Production deployment với VPS, domain và SSL được mô tả trong:
-
-```text
-DEPLOYMENT.md
-```
-
-Các file triển khai production:
+Production co the trien khai bang Docker Compose ket hop:
 
 - `Dockerfile`
 - `docker-compose.prod.yml`
 - `Caddyfile`
 
-## Kiểm Tra Dự Án
+Neu chua co VPS, du an co the deploy bang Vercel vi day la ung dung Next.js.
+
+## Kiem Tra Du An
 
 ```bash
 npm run typecheck
@@ -204,16 +156,17 @@ npm run lint
 npm run build
 ```
 
-Ý nghĩa:
+Y nghia:
 
-- `typecheck`: kiểm tra TypeScript.
-- `lint`: kiểm tra quy tắc code.
-- `build`: build production bằng Next.js.
+- `typecheck`: kiem tra TypeScript.
+- `lint`: kiem tra quy tac code.
+- `build`: build production bang Next.js.
 
-## Cấu Trúc Thư Mục
+## Cau Truc Thu Muc
 
 ```text
 project
+├── public
 ├── src
 │   ├── app
 │   ├── components
@@ -221,20 +174,22 @@ project
 │   ├── hooks
 │   ├── lib
 │   └── views
-├── supabase
-│   └── migrations
 ├── Dockerfile
 ├── docker-compose.yml
+├── docker-compose.prod.yml
+├── Caddyfile
 ├── README.md
-├── FEATURES.md
-└── AI_USAGE.md
+├── package.json
+├── next.config.js
+├── tailwind.config.js
+└── tsconfig.json
 ```
-## Trạng Thái Kiểm Tra Gần Nhất
 
-Dự án đã được kiểm tra bằng:
+## Ghi Chu
 
-```bash
-npm run typecheck
-npm run lint
-npm run build
-```
+- Khong commit file `.env`.
+- Khong commit `node_modules`.
+- Khong commit `.next`, `dist` hoac file build/cache.
+- Khong commit script Supabase neu da nop rieng bang file zip.
+- Can cau hinh bien moi truong tren Vercel neu deploy len Vercel.
+- Can cap nhat Supabase Authentication URL va Redirect URLs theo domain deploy.
